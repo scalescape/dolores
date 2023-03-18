@@ -1,0 +1,3 @@
+# Dolores
+
+Simplifying secrets management
