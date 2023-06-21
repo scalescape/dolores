@@ -1,5 +1,4 @@
 VERSION=$(shell git tag --sort=-version:refname | head -1)
-VERSION=0.0
 SHA=$(shell git rev-parse --short HEAD)
 
 LDFLAGS=-X 'dolores.Version=$(VERSION)' -X 'dolores.Sha=$(SHA)'
