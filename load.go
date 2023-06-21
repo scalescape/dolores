@@ -15,7 +15,10 @@ type Variable struct {
 }
 
 func (v Variable) Data() []byte {
-	return append(v.Key, v.Value...)
+	res := append(v.Key, byte('='))
+	res = append(res, v.Value...)
+	res = append(res, byte('\n'))
+	return res
 }
 
 type EnvFile struct {
