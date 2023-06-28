@@ -98,6 +98,7 @@ linters:
     - gochecknoglobals
     - nlreturn
     - godox
+    - wrapcheck
 
 linters-settings:
   lll:

@@ -14,7 +14,7 @@ setup:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.46.2
 
 install:
-	go install --ldflags="${LDFLAGS}" .
+	go install --ldflags="${LDFLAGS}" ./cmd/dolores/
 
 lint: setup
 	./bin/golangci-lint run
@@ -26,4 +26,4 @@ gomod:
 	go mod tidy
 
 build: gomod
-	go build --ldflags="${LDFLAGS}" .
+	go build --ldflags="${LDFLAGS}" -o ./bin ./cmd/dolores/
