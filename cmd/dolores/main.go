@@ -17,6 +17,10 @@ var (
 	sha     = "undefined"
 )
 
+type CtxKey string
+
+var EnvValue CtxKey = "environment"
+
 func main() {
 	log.Logger = log.Output(zerolog.NewConsoleWriter())
 	cli.VersionPrinter = VersionDisplay
@@ -29,6 +33,13 @@ func main() {
 			&cli.StringFlag{
 				Name: "environment", Aliases: []string{"env"},
 				Usage: "environment where you want to manage [staging|production]",
+				Action: func(cctx *cli.Context, v string) error {
+					cctx.Context = context.WithValue(cctx.Context, EnvValue, v)
+					if v == "" {
+						return fmt.Errorf("invalid flag: %w", ErrInvalidEnvironment)
+					}
+					return nil
+				},
 			},
 		},
 		Commands: []*cli.Command{
@@ -46,7 +57,11 @@ func VersionDisplay(cc *cli.Context) {
 }
 
 func newClient(ctx context.Context) *client.Client {
-	cfg, err := config.LoadClient()
+	env, ok := ctx.Value(EnvValue).(string)
+	if !ok || env == "" {
+		log.Fatal().Msgf("environment not passed properly")
+	}
+	cfg, err := config.LoadClient(env)
 	if err != nil {
 		log.Fatal().Msgf("error loading config: %v", err)
 		return nil

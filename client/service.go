@@ -15,7 +15,7 @@ import (
 
 var ErrInvalidPublicKeys = errors.New("invalid public keys")
 
-const metadataFile = "metadata"
+const metadataFile = "dolores.md"
 
 type Service struct {
 	store google.StorageClient
@@ -54,7 +54,7 @@ func (s Service) getObjectPrefix(ctx context.Context, env, bucket string) (strin
 	if err := json.Unmarshal(md, &meta); err != nil {
 		return "", fmt.Errorf("failed to parse metadata file: %w", err)
 	}
-	return meta.Locations[env], nil
+	return meta.Location, nil
 }
 
 func (s Service) FetchConfig(ctx context.Context, bucket string, req FetchSecretRequest) ([]byte, error) {
@@ -78,10 +78,10 @@ func (s Service) readMetadata(ctx context.Context, bucket, mdf string) ([]byte, 
 	return s.store.ReadObject(ctx, bucket, mdf)
 }
 
-func (s Service) SaveMetadata(ctx context.Context, bucket string, md config.Metadata) error {
+func (s Service) SaveObject(ctx context.Context, bucket, fname string, md any) error {
 	data, err := json.Marshal(md)
 	if err != nil {
 		return err
 	}
-	return s.store.WriteToObject(ctx, bucket, metadataFile, data)
+	return s.store.WriteToObject(ctx, bucket, fname, data)
 }

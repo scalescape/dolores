@@ -2,8 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
+	"filippo.io/age"
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -11,6 +16,8 @@ import (
 	"github.com/scalescape/dolores/config"
 	"github.com/urfave/cli/v2"
 )
+
+var ErrInvalidEnvironment = errors.New("invalid environment")
 
 type InitCommand struct {
 	*cli.Command
@@ -34,23 +41,24 @@ func NewInitCommand(newCli GetClient) *cli.Command {
 }
 
 type Input struct {
+	UserID                 string `survey:"user_id"`
 	Bucket                 string
-	Environment            string
 	Location               string
 	ApplicationCredentials string `survey:"google_creds"`
 }
 
-func (c *InitCommand) getData() (*Input, error) {
+func (inp Input) ToMetadata(env string) config.Metadata {
+	return config.Metadata{
+		Bucket:      inp.Bucket,
+		Location:    inp.Location,
+		CreatedAt:   time.Now(),
+		Environment: env,
+	}
+}
+
+func (c *InitCommand) getData(env string) (*Input, error) {
 	credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	qs := []*survey.Question{
-		{
-			Name: "environment",
-			Prompt: &survey.Select{
-				Message: "Choose an environment:",
-				Options: []string{"production", "staging"},
-				Default: "production",
-			},
-		},
 		{
 			Name: "bucket",
 			Prompt: &survey.Input{
@@ -62,7 +70,15 @@ func (c *InitCommand) getData() (*Input, error) {
 			Name:     "location",
 			Validate: survey.Required,
 			Prompt: &survey.Input{
-				Message: "Enter the object location to store the secrets",
+				Message: "Enter the object location to store the secrets:",
+			},
+		},
+		{
+			Name:     "user_id",
+			Validate: survey.Required,
+			Prompt: &survey.Input{
+				Message: "Enter your unique name/id",
+				Default: os.Getenv("USER"),
 			},
 		},
 	}
@@ -71,8 +87,8 @@ func (c *InitCommand) getData() (*Input, error) {
 			Name:     "google_creds",
 			Validate: survey.Required,
 			Prompt: &survey.Select{
-				Message: "Confirm using GOOGLE_APPLICATION_CREDENTIALS env as credentials file",
-				Options: []string{credFile, ""},
+				Message: "Use GOOGLE_APPLICATION_CREDENTIALS env as credentials file",
+				Options: []string{credFile},
 			},
 		})
 	} else {
@@ -86,25 +102,77 @@ func (c *InitCommand) getData() (*Input, error) {
 	}
 	res := new(Input)
 	if err := survey.Ask(qs, res); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get appropriate input: %w", err)
 	}
 	return res, nil
 }
 
+func (c *InitCommand) createConfig(configDir, keyFile string) error {
+	if err := os.MkdirAll(configDir, 0o770); err != nil {
+		return fmt.Errorf("failed to create dir: %w", err)
+	}
+	return nil
+}
+
+func (c *InitCommand) generateKey(fname string) (string, error) {
+	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		return "", fmt.Errorf("failed to create file %s with error %w", fname, err)
+	}
+	defer f.Close()
+	k, err := age.GenerateX25519Identity()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate key: %w", err)
+	}
+	pubKey := k.Recipient().String()
+	fmt.Fprintf(f, "# created: %s\n", time.Now().Format(time.RFC3339))
+	fmt.Fprintf(f, "# public key: %s\n", pubKey)
+	fmt.Fprintf(f, "%s\n", k)
+	log.Info().Msgf("successfully generated asymmetric key")
+	return pubKey, nil
+}
+
 func (c *InitCommand) initialize(ctx *cli.Context) error {
-	inp, err := c.getData()
+	env := ctx.String("environment")
+	if env == "" {
+		return fmt.Errorf("invalid environment: %w", ErrInvalidEnvironment)
+	}
+	inp, err := c.getData(env)
 	if err != nil {
 		return err
 	}
-	md := config.Metadata{
-		Bucket: inp.Bucket,
-		Locations: map[string]string{
-			inp.Environment: inp.Location,
-		},
+	keyFilePath := filepath.Join(config.Dir, env+".key")
+	if err := c.createConfig(config.Dir, keyFilePath); err != nil {
+		return err
 	}
-	if err := c.rcli(ctx.Context).SaveMetadata(ctx.Context, inp.Bucket, md); err != nil {
+	_, err = os.Stat(keyFilePath)
+	var publicKey string
+	if os.IsNotExist(err) {
+		publicKey, err = c.generateKey(keyFilePath)
+		if err != nil {
+			return err
+		}
+	} else {
+		log.Info().Msgf("asymmetric key already exists at %s", keyFilePath)
+	}
+	d := &config.Dolores{}
+	md := inp.ToMetadata(env)
+	d.AddEnvironment(env, keyFilePath, md)
+
+	// saving metadata and append key to google cloud storage
+	storeCli := c.rcli(ctx.Context)
+	pubKey := fmt.Sprintf("%s/keys/%s.key", inp.Location, inp.UserID)
+	if err := storeCli.SaveObject(ctx.Context, inp.Bucket, pubKey, publicKey); err != nil {
+		return fmt.Errorf("error writing public key: %w", err)
+	}
+	// TODO: shouldn't overwrite metadata if it's already available in remote
+	if err := storeCli.SaveObject(ctx.Context, inp.Bucket, "dolores.md", md); err != nil {
 		c.log.Error().Msgf("error writing metadta: %v", err)
 		return err
 	}
+	if err := d.SaveToDisk(); err != nil {
+		return fmt.Errorf("error saving dolores config: %w", err)
+	}
+	log.Info().Msgf("successfully initialized dolores")
 	return nil
 }
