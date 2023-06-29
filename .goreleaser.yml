@@ -1,0 +1,15 @@
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - id: dolores
+    main: ./cmd/dolores
+    binary: dolores
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

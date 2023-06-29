@@ -27,3 +27,6 @@ gomod:
 
 build: gomod
 	go build --ldflags="${LDFLAGS}" -o ./bin ./cmd/dolores/
+
+gorelease_snapshot: build
+	goreleaser release --snapshot --rm-dist
