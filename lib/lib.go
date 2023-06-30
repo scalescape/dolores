@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 var ErrNoEditorFound = errors.New("no editor found")
@@ -68,4 +70,15 @@ func getEditor() (string, error) {
 		return "", ErrNoEditorFound
 	}
 	return editor, nil
+}
+
+func AbsPath(fname string) string {
+	if !filepath.IsAbs(fname) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Error().Msgf("Error getting current working directory: %v", err)
+		}
+		fname = filepath.Join(cwd, fname)
+	}
+	return fname
 }
