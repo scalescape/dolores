@@ -10,7 +10,11 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-var ErrInvalidGoogleCreds = errors.New("invalid google application credentials")
+var (
+	ErrInvalidGoogleCreds   = errors.New("invalid google application credentials")
+	ErrInvalidStorageBucket = errors.New("invalid storage bucket")
+)
+
 var (
 	HomePath = os.Getenv("HOME")
 	Dir      = filepath.Join(HomePath, ".config", "dolores")
@@ -20,6 +24,7 @@ var (
 type Google struct {
 	ApplicationCredentials string `split_words:"true"`
 	StorageBucket          string `split_words:"true"`
+	StoragePrefix          string
 }
 
 type Metadata struct {
@@ -41,6 +46,9 @@ func (c Client) Valid() error {
 	if c.Google.ApplicationCredentials == "" {
 		return ErrInvalidGoogleCreds
 	}
+	if c.Google.StorageBucket == "" {
+		return ErrInvalidStorageBucket
+	}
 	return nil
 }
 
@@ -53,9 +61,11 @@ func LoadClient(env string) (Client, error) {
 	if err := envconfig.Process("GOOGLE", &cfg.Google); err != nil {
 		return Client{}, fmt.Errorf("processing config: %w", err)
 	}
-	bucket := d.Environments[env].Bucket
+	md := d.Environments[env].Metadata
+	bucket := md.Bucket
 	if bucket != "" {
 		cfg.Google.StorageBucket = bucket
+		cfg.Google.StoragePrefix = md.Location
 	}
 	if err := cfg.Valid(); err != nil {
 		return Client{}, err

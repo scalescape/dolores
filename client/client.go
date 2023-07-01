@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/config"
 	"github.com/scalescape/dolores/store/google"
@@ -11,7 +12,9 @@ import (
 type Client struct {
 	Service
 	bucket string
+	prefix string
 	ctx    context.Context //nolint:containedctx
+	log    zerolog.Logger
 }
 
 type EncryptedConfig struct {
@@ -21,7 +24,7 @@ type EncryptedConfig struct {
 }
 
 func (c *Client) UploadSecrets(req EncryptedConfig) error {
-	log.Trace().Msgf("uploading to %s name: %s", c.bucket, req.Name)
+	c.log.Trace().Msgf("uploading to %s name: %s", c.bucket, req.Name)
 	return c.Service.Upload(c.ctx, req, c.bucket)
 }
 
@@ -50,7 +53,8 @@ type OrgPublicKeys struct {
 }
 
 func (c *Client) GetOrgPublicKeys(env string) (OrgPublicKeys, error) {
-	keys, err := c.Service.GetOrgPublicKeys(c.ctx, env, c.bucket)
+	c.log.Debug().Msgf("fetching public keys for env: %s", env)
+	keys, err := c.Service.GetOrgPublicKeys(c.ctx, env, c.bucket, c.prefix+"/keys")
 	if err != nil || len(keys) == 0 {
 		return OrgPublicKeys{}, err
 	}
@@ -70,5 +74,10 @@ func New(ctx context.Context, cfg config.Client) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{ctx: ctx, Service: Service{store: st}, bucket: cfg.BucketName()}, nil
+	cli := &Client{
+		ctx: ctx, Service: Service{store: st},
+		bucket: cfg.BucketName(), prefix: cfg.StoragePrefix,
+		log: log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Logger(),
+	}
+	return cli, nil
 }

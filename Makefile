@@ -1,7 +1,7 @@
 VERSION=$(shell git tag --sort=-version:refname | head -1)
 SHA=$(shell git rev-parse --short HEAD)
 
-LDFLAGS=-X 'dolores.Version=$(VERSION)' -X 'dolores.Sha=$(SHA)'
+LDFLAGS=-X 'main.Version=$(VERSION)' -X 'main.Sha=$(SHA)'
 
 .PHONY: setup build build_linux test run clean all
 

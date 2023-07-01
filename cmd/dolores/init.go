@@ -158,20 +158,22 @@ func (c *InitCommand) initialize(ctx *cli.Context) error {
 	d := &config.Dolores{}
 	md := inp.ToMetadata(env)
 	d.AddEnvironment(env, keyFilePath, md)
+	if err := d.SaveToDisk(); err != nil {
+		return fmt.Errorf("error saving dolores config: %w", err)
+	}
 
 	// saving metadata and append key to google cloud storage
 	storeCli := c.rcli(ctx.Context)
-	pubKey := fmt.Sprintf("%s/keys/%s.key", inp.Location, inp.UserID)
-	if err := storeCli.SaveObject(ctx.Context, inp.Bucket, pubKey, publicKey); err != nil {
-		return fmt.Errorf("error writing public key: %w", err)
+	if publicKey != "" {
+		pubKey := fmt.Sprintf("%s/keys/%s.key", inp.Location, inp.UserID)
+		if err := storeCli.UploadPubKey(ctx.Context, inp.Bucket, pubKey, publicKey); err != nil {
+			return fmt.Errorf("error writing public key: %w", err)
+		}
 	}
 	// TODO: shouldn't overwrite metadata if it's already available in remote
 	if err := storeCli.SaveObject(ctx.Context, inp.Bucket, "dolores.md", md); err != nil {
 		c.log.Error().Msgf("error writing metadta: %v", err)
 		return err
-	}
-	if err := d.SaveToDisk(); err != nil {
-		return fmt.Errorf("error saving dolores config: %w", err)
 	}
 	log.Info().Msgf("successfully initialized dolores")
 	return nil

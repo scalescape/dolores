@@ -60,6 +60,7 @@ func (c *ConfigCommand) encryptAction(ctx *cli.Context) error {
 	if err := secMan.Encrypt(req); err != nil {
 		return err
 	}
+	log.Info().Msgf("Encrypted file upload success! You can delete the local file.")
 	return nil
 }
 

@@ -6,6 +6,8 @@ Simplifying secrets management on your cloud.
 
 Encrypts configurations with different encryption algorithm and uses GCP or AWS or Vault as storage.
 
+![Demo](./assets/demo.gif)
+
 ## Setup
 
 Configure for different environments to manage secrets

@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -90,6 +91,27 @@ func (s StorageClient) ReadObject(ctx context.Context, bucketName, fileName stri
 		return nil, err
 	}
 	return data, nil
+}
+
+func (s StorageClient) ListOjbect(ctx context.Context, bucketName, path string) ([]string, error) {
+	bucket := s.Client.Bucket(bucketName)
+	if _, err := bucket.Attrs(ctx); err != nil {
+		return nil, fmt.Errorf("failed to get bucket: %w", err)
+	}
+	objs := make([]string, 0)
+	iter := bucket.Objects(ctx, &storage.Query{Prefix: path})
+	for {
+		attrs, err := iter.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to iterate object list: %w", err)
+		}
+		objs = append(objs, attrs.Name)
+	}
+	log.Trace().Msgf("list of objects from path: %s %+v", path, objs)
+	return objs, nil
 }
 
 func (s StorageClient) createNewBucket(ctx context.Context, name string) error {
