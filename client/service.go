@@ -24,6 +24,36 @@ type gcsStore interface {
 	WriteToObject(ctx context.Context, bucketName, fileName string, data []byte) error
 	ReadObject(ctx context.Context, bucketName, fileName string) ([]byte, error)
 	ListOjbect(ctx context.Context, bucketName, path string) ([]string, error)
+	ExistsObject(ctx context.Context, bucketName, fileName string) (bool, error)
+}
+
+type Configuration struct {
+	Metadata  config.Metadata
+	PublicKey string
+	UserID    string
+}
+
+func (s Service) Init(ctx context.Context, bucket string, cfg Configuration) error {
+	// saving metadata and append key to google cloud storage
+	if cfg.PublicKey != "" {
+		pubKey := fmt.Sprintf("%s/keys/%s.key", cfg.Metadata.Location, cfg.UserID)
+		if err := s.uploadPubKey(ctx, bucket, pubKey, cfg.PublicKey); err != nil {
+			return fmt.Errorf("error writing public key: %w", err)
+		}
+	}
+	exists, err := s.store.ExistsObject(ctx, bucket, metadataFile)
+	if err != nil {
+		return err
+	}
+	if exists {
+		log.Info().Msgf("metadata already configured in remote")
+		return nil
+	}
+	if err := s.saveObject(ctx, bucket, metadataFile, cfg.Metadata); err != nil {
+		log.Error().Msgf("error writing metadta: %v", err)
+		return err
+	}
+	return nil
 }
 
 func (s Service) Upload(ctx context.Context, req EncryptedConfig, bucket string) error {
@@ -62,18 +92,6 @@ func (s Service) GetOrgPublicKeys(ctx context.Context, env, bucketName, path str
 	return keys, nil
 }
 
-func (s Service) getObjectPrefix(ctx context.Context, env, bucket string) (string, error) {
-	md, err := s.readMetadata(ctx, bucket, metadataFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to read metadata: %w", err)
-	}
-	var meta config.Metadata
-	if err := json.Unmarshal(md, &meta); err != nil {
-		return "", fmt.Errorf("failed to parse metadata file: %w", err)
-	}
-	return meta.Location, nil
-}
-
 func (s Service) FetchConfig(ctx context.Context, bucket string, req FetchSecretRequest) ([]byte, error) {
 	fileName := req.Name
 	prefix, err := s.getObjectPrefix(ctx, req.Environment, bucket)
@@ -90,7 +108,19 @@ func (s Service) FetchConfig(ctx context.Context, bucket string, req FetchSecret
 	return data, nil
 }
 
-func (s Service) UploadPubKey(ctx context.Context, bucket string, path, key string) error {
+func (s Service) getObjectPrefix(ctx context.Context, env, bucket string) (string, error) {
+	md, err := s.readMetadata(ctx, bucket, metadataFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to read metadata: %w", err)
+	}
+	var meta config.Metadata
+	if err := json.Unmarshal(md, &meta); err != nil {
+		return "", fmt.Errorf("failed to parse metadata file: %w", err)
+	}
+	return meta.Location, nil
+}
+
+func (s Service) uploadPubKey(ctx context.Context, bucket string, path, key string) error {
 	return s.store.WriteToObject(ctx, bucket, path, []byte(key))
 }
 
@@ -99,7 +129,7 @@ func (s Service) readMetadata(ctx context.Context, bucket, mdf string) ([]byte, 
 	return s.store.ReadObject(ctx, bucket, mdf)
 }
 
-func (s Service) SaveObject(ctx context.Context, bucket, fname string, md any) error {
+func (s Service) saveObject(ctx context.Context, bucket, fname string, md any) error {
 	data, err := json.Marshal(md)
 	if err != nil {
 		return err

@@ -74,13 +74,9 @@ func (s StorageClient) WriteToObject(ctx context.Context, bucketName, fileName s
 }
 
 func (s StorageClient) ReadObject(ctx context.Context, bucketName, fileName string) ([]byte, error) {
-	bucket := s.Client.Bucket(bucketName)
-	if _, err := bucket.Attrs(ctx); err != nil {
-		return nil, fmt.Errorf("failed to get bucket: %w", err)
-	}
-	obj := bucket.Object(fileName)
-	if _, err := obj.Attrs(ctx); err != nil {
-		return nil, fmt.Errorf("failed to verify bucket attributes: %w", err)
+	obj, err := s.getObject(ctx, bucketName, fileName)
+	if err != nil {
+		return nil, err
 	}
 	rdr, err := obj.NewReader(ctx)
 	if err != nil {
@@ -112,6 +108,29 @@ func (s StorageClient) ListOjbect(ctx context.Context, bucketName, path string) 
 	}
 	log.Trace().Msgf("list of objects from path: %s %+v", path, objs)
 	return objs, nil
+}
+
+func (s StorageClient) ExistsObject(ctx context.Context, bucket, fileName string) (bool, error) {
+	_, err := s.getObject(ctx, bucket, fileName)
+	if errors.Is(err, storage.ErrObjectNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (s StorageClient) getObject(ctx context.Context, bucketName, fileName string) (*storage.ObjectHandle, error) {
+	bucket := s.Client.Bucket(bucketName)
+	if _, err := bucket.Attrs(ctx); err != nil {
+		return nil, fmt.Errorf("failed to get bucket: %w", err)
+	}
+	obj := bucket.Object(fileName)
+	if _, err := obj.Attrs(ctx); err != nil {
+		return nil, fmt.Errorf("failed to verify bucket attributes: %w", err)
+	}
+	return obj, nil
 }
 
 func (s StorageClient) createNewBucket(ctx context.Context, name string) error {
