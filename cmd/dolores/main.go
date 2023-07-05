@@ -78,7 +78,7 @@ func newClient(ctx context.Context) *client.Client {
 	if !ok || env == "" {
 		log.Fatal().Msgf("environment not passed properly")
 	}
-	cfg, err := config.LoadClient(env)
+	cfg, err := config.LoadClient(ctx, env)
 	if err != nil {
 		log.Fatal().Msgf("error loading config: %v", err)
 		return nil

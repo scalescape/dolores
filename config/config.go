@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -13,6 +14,13 @@ import (
 var (
 	ErrInvalidGoogleCreds   = errors.New("invalid google application credentials")
 	ErrInvalidStorageBucket = errors.New("invalid storage bucket")
+)
+
+type CtxKey string
+
+var (
+	EnvKey   CtxKey = "ctx_environment"
+	CredsKey CtxKey = "ctx_application_creds"
 )
 
 var (
@@ -52,7 +60,7 @@ func (c Client) Valid() error {
 	return nil
 }
 
-func LoadClient(env string) (Client, error) {
+func LoadClient(ctx context.Context, env string) (Client, error) {
 	var cfg Client
 	d, err := LoadFromDisk()
 	if err != nil {
@@ -60,6 +68,12 @@ func LoadClient(env string) (Client, error) {
 	}
 	if err := envconfig.Process("GOOGLE", &cfg.Google); err != nil {
 		return Client{}, fmt.Errorf("processing config: %w", err)
+	}
+
+	if cfg.Google.ApplicationCredentials == "" {
+		if creds, ok := ctx.Value(CredsKey).(string); ok {
+			cfg.Google.ApplicationCredentials = creds
+		}
 	}
 	md := d.Environments[env].Metadata
 	bucket := md.Bucket

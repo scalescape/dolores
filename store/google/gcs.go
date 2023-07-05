@@ -89,6 +89,22 @@ func (s StorageClient) ReadObject(ctx context.Context, bucketName, fileName stri
 	return data, nil
 }
 
+func (s StorageClient) ListBuckets(ctx context.Context) ([]string, error) {
+	buckets := make([]string, 0)
+	iter := s.Client.Buckets(ctx, s.projectID)
+	for {
+		attrs, err := iter.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to iterate bucket list: %w", err)
+		}
+		buckets = append(buckets, attrs.Name)
+	}
+	return buckets, nil
+}
+
 func (s StorageClient) ListOjbect(ctx context.Context, bucketName, path string) ([]string, error) {
 	bucket := s.Client.Bucket(bucketName)
 	if _, err := bucket.Attrs(ctx); err != nil {

@@ -70,7 +70,8 @@ func (c *InitCommand) getData(env string) (*Input, error) {
 			Name:     "location",
 			Validate: survey.Required,
 			Prompt: &survey.Input{
-				Message: "Enter the object location to store the secrets:",
+				Message: "Enter the storage path to store the config:",
+				Default: "secrets",
 			},
 		},
 		{
@@ -132,8 +133,8 @@ func (c *InitCommand) generateKey(fname string) (string, error) {
 	return pubKey, nil
 }
 
-func (c *InitCommand) initialize(ctx *cli.Context) error {
-	env := ctx.String("environment")
+func (c *InitCommand) initialize(cctx *cli.Context) error {
+	env := cctx.String("environment")
 	if env == "" {
 		return fmt.Errorf("invalid environment: %w", ErrInvalidEnvironment)
 	}
@@ -161,9 +162,10 @@ func (c *InitCommand) initialize(ctx *cli.Context) error {
 	if err := d.SaveToDisk(); err != nil {
 		return fmt.Errorf("error saving dolores config: %w", err)
 	}
-	cli := c.rcli(ctx.Context)
+	ctx := context.WithValue(cctx.Context, config.CredsKey, inp.ApplicationCredentials)
+	cli := c.rcli(ctx)
 	cfg := client.Configuration{PublicKey: publicKey, Metadata: md, UserID: inp.UserID}
-	if err := cli.Init(ctx.Context, md.Bucket, cfg); err != nil {
+	if err := cli.Init(ctx, md.Bucket, cfg); err != nil {
 		return err
 	}
 	log.Info().Msgf("successfully initialized dolores")
