@@ -61,6 +61,7 @@ func main() {
 		Commands: []*cli.Command{
 			NewConfig(newClient).Command,
 			NewRunner(newClient).Command,
+			NewMonitor(),
 			NewInitCommand(newClient),
 		},
 	}

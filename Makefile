@@ -1,5 +1,6 @@
 VERSION=$(shell git tag --sort=-version:refname | head -1)
 SHA=$(shell git rev-parse --short HEAD)
+CMD=dolores
 
 LDFLAGS=-X 'main.Version=$(VERSION)' -X 'main.Sha=$(SHA)'
 
@@ -14,7 +15,7 @@ setup:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.46.2
 
 install:
-	go install --ldflags="${LDFLAGS}" ./cmd/dolores/
+	go install --ldflags="${LDFLAGS}" ./cmd/${CMD}/
 
 lint: setup
 	./bin/golangci-lint run
@@ -26,7 +27,7 @@ gomod:
 	go mod tidy
 
 build: gomod
-	go build --ldflags="${LDFLAGS}" -o ./bin ./cmd/dolores/
+	go build --ldflags="${LDFLAGS}" -o ./bin/${CMD} ./cmd/${CMD}/
 
 gorelease_snapshot: build
 	goreleaser release --snapshot --rm-dist
