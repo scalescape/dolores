@@ -99,6 +99,7 @@ linters:
     - nlreturn
     - godox
     - wrapcheck
+    - depguard
 
 linters-settings:
   lll:

@@ -124,6 +124,6 @@ func (sm SecretManager) Decrypt(cfg DecryptConfig) error {
 	return nil
 }
 
-func NewSecertsManager(log zerolog.Logger, rcli *client.Client) SecretManager {
+func NewSecretsManager(log zerolog.Logger, rcli *client.Client) SecretManager {
 	return SecretManager{Client: rcli, log: log}
 }

@@ -53,7 +53,7 @@ func (c *Runner) environ(ctx context.Context, name string) ([]string, error) {
 	envs := os.Environ()
 	log := log.With().Str("cmd", "run").Str("environment", c.environment).Logger()
 	log.Debug().Msgf("loading configuration %s before running", name)
-	sec := secrets.NewSecertsManager(log, c.rcli(ctx))
+	sec := secrets.NewSecretsManager(log, c.rcli(ctx))
 	if err := sec.Decrypt(c.DecryptConfig); err != nil {
 		return nil, err
 	}

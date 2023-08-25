@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/rs/zerolog/log"
+	"github.com/scalescape/dolores"
 	"github.com/scalescape/dolores/config"
 	"github.com/scalescape/dolores/secrets"
 	"github.com/urfave/cli/v2"
@@ -46,7 +47,7 @@ func parseServerConfig(cctx *cli.Context) (config.Server, error) {
 		Port: cctx.Int("port"), Host: cctx.String("host"),
 	}
 	if cfg.Port == 0 {
-		return config.Server{}, fmt.Errorf("invalid port configuration")
+		return config.Server{}, fmt.Errorf("%w: port", dolores.ErrInvalidConfiguraion)
 	}
 	return cfg, nil
 }

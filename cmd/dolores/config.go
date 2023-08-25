@@ -41,7 +41,7 @@ func (c *ConfigCommand) editAction(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	sec := secrets.NewSecertsManager(log, c.rcli(ctx.Context))
+	sec := secrets.NewSecretsManager(log, c.rcli(ctx.Context))
 	cfg := secrets.EditConfig{DecryptConfig: dcfg}
 	if err := sec.Edit(cfg); err != nil {
 		log.Error().Msgf("error editing file: %v", err)
@@ -55,7 +55,7 @@ func (c *ConfigCommand) encryptAction(ctx *cli.Context) error {
 	file := ctx.String("file")
 	name := ctx.String("name")
 	log := c.log.With().Str("cmd", "config.encrypt").Str("environment", env).Logger()
-	secMan := secrets.NewSecertsManager(log, c.rcli(ctx.Context))
+	secMan := secrets.NewSecretsManager(log, c.rcli(ctx.Context))
 	req := secrets.EncryptConfig{Environment: env, FileName: file, Name: name}
 	if err := secMan.Encrypt(req); err != nil {
 		return err
@@ -71,7 +71,7 @@ func (c *ConfigCommand) decryptAction(ctx *cli.Context) error {
 	}
 	log := c.log.With().Str("cmd", "config.dencrypt").Str("environment", req.Environment).Logger()
 	log.Trace().Str("cmd", "config.decrypt").Msgf("running decryption")
-	sec := secrets.NewSecertsManager(log, c.rcli(ctx.Context))
+	sec := secrets.NewSecretsManager(log, c.rcli(ctx.Context))
 	return sec.Decrypt(req)
 }
 

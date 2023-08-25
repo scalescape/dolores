@@ -12,7 +12,7 @@ default: build test
 
 setup:
 	mkdir -p bin
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.46.2
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.54.2
 
 install:
 	go install --ldflags="${LDFLAGS}" ./cmd/${CMD}/

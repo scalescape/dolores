@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/monitor"
+	"github.com/scalescape/go-metrics"
+	"github.com/scalescape/go-metrics/common"
 	"github.com/urfave/cli/v2"
 )
 
@@ -25,9 +29,20 @@ func (m Monitor) Daemon(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	pr := monitor.NewProxy(cfg, backend)
+	metricsStoreAddress := cctx.String("statsd")
+	obs, err := metrics.Setup(
+		metrics.WithAddress(metricsStoreAddress),
+		metrics.WithKind(common.Statsd),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create observer: %w", err)
+	}
+	pr, err := monitor.NewProxy(cfg, backend, obs)
+	if err != nil {
+		return fmt.Errorf("failed to instantiate proxy: %w", err)
+	}
 	if err := pr.Start(); err != nil {
-		return err
+		return fmt.Errorf("failed to start proxy server: %w", err)
 	}
 	return nil
 }
@@ -50,6 +65,12 @@ func monitorCommand(action cli.ActionFunc) *cli.Command {
 				Name:    "port",
 				Aliases: []string{"p"},
 				Value:   9980,
+			},
+			&cli.StringFlag{
+				Name:     "statsd",
+				Usage:    "statsd address host:8125",
+				Value:    "localhost:8125",
+				Required: true,
 			},
 		},
 		Action: action,
