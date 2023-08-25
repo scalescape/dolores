@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 
 	"github.com/rs/zerolog/log"
+	"github.com/scalescape/dolores/config"
 	"github.com/scalescape/dolores/secrets"
 	"github.com/urfave/cli/v2"
 )
@@ -37,4 +39,25 @@ func parseDecryptConfig(ctx *cli.Context) (secrets.DecryptConfig, error) {
 	}
 
 	return req, nil
+}
+
+func parseServerConfig(cctx *cli.Context) (config.Server, error) {
+	cfg := config.Server{
+		Port: cctx.Int("port"), Host: cctx.String("host"),
+	}
+	if cfg.Port == 0 {
+		return config.Server{}, fmt.Errorf("invalid port configuration")
+	}
+	return cfg, nil
+}
+
+func parseBackendConfig(cctx *cli.Context) (config.Backend, error) {
+	burl, err := url.ParseRequestURI(cctx.String("backend"))
+	if err != nil {
+		return config.Backend{}, err
+	}
+	backend := config.Backend{
+		URL: burl,
+	}
+	return backend, nil
 }

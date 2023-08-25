@@ -17,10 +17,18 @@ type Monitor struct {
 }
 
 func (m Monitor) Daemon(cctx *cli.Context) error {
-	m.log.Info().Msgf("I'm here")
-	cfg := monitor.Config{Port: cctx.Int("port"), Host: cctx.String("host")}
-	pr := monitor.NewProxy(cfg)
-	pr.Start()
+	cfg, err := parseServerConfig(cctx)
+	if err != nil {
+		return err
+	}
+	backend, err := parseBackendConfig(cctx)
+	if err != nil {
+		return err
+	}
+	pr := monitor.NewProxy(cfg, backend)
+	if err := pr.Start(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -30,6 +38,11 @@ func monitorCommand(action cli.ActionFunc) *cli.Command {
 		Usage: "daemon to monitor HTTP API",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
+				Name:     "backend",
+				Usage:    "backend url (http://localhost:8080) for which the requests should be forwarded",
+				Required: true,
+			},
+			&cli.StringFlag{
 				Name:  "host",
 				Value: "localhost",
 			},
@@ -37,11 +50,6 @@ func monitorCommand(action cli.ActionFunc) *cli.Command {
 				Name:    "port",
 				Aliases: []string{"p"},
 				Value:   9980,
-			},
-			&cli.IntFlag{
-				Name:     "watch",
-				Aliases:  []string{"w"},
-				Required: true,
 			},
 		},
 		Action: action,

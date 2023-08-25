@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/storage v1.30.1
 	filippo.io/age v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/zerolog v1.29.1
 	github.com/stretchr/testify v1.8.4

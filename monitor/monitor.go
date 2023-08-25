@@ -2,51 +2,44 @@ package monitor
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
+	"github.com/scalescape/dolores/config"
 )
 
+type httpCli interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 type Proxy struct {
-	cfg Config
+	server  config.Server
+	backend *url.URL
+	cli     httpCli
 }
 
-type Config struct {
-	Port int
-	Host string
+func (p Proxy) GenericHandler(next http.Handler) http.Handler {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		log.Trace().Msgf("forwarding request: %s path: %d", r.URL, len(r.Header))
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(f)
 }
 
-func (s Config) Address() string {
-	return fmt.Sprintf("%s:%d", s.Host, s.Port)
-}
-
-func router() *mux.Router {
-	m := mux.NewRouter()
-	//m.Use(mux.MiddlewareFunc(contentWriter))
-	m.Use(mux.CORSMethodMiddleware(m))
-	//m.Use(mux.MiddlewareFunc(accessController))
-	m.HandleFunc("/.*", GenericHandler)
-	return m
-}
-
-func GenericHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("/ping"))
-	log.Info().Msgf("got request: %s", r.URL)
-}
-
-func (p Proxy) Start() {
-	addr := p.cfg.Address()
+func (p Proxy) Start() error {
+	addr := p.server.Address()
 	log.Info().Msgf("[Main] listening on address %s", addr)
+	rp := httputil.NewSingleHostReverseProxy(p.backend)
 	server := &http.Server{
 		ReadTimeout: 2 * time.Second,
 		Addr:        addr,
-		Handler:     http.HandlerFunc(GenericHandler),
+		Handler:     p.GenericHandler(rp),
 	}
 	go func(server *http.Server) {
 		err := server.ListenAndServe()
@@ -62,7 +55,7 @@ func (p Proxy) Start() {
 	if err := server.Shutdown(ctx); err != nil {
 		log.Error().Msgf("[Main] error shutting down server\n")
 	}
-
+	return nil
 }
 
 func watchSignal() chan os.Signal {
@@ -71,4 +64,9 @@ func watchSignal() chan os.Signal {
 	return stop
 }
 
-func NewProxy(cfg Config) Proxy { return Proxy{cfg} }
+func NewProxy(cfg config.Server, backend config.Backend) Proxy {
+	return Proxy{
+		server:  cfg,
+		backend: backend.URL,
+		cli:     http.DefaultClient}
+}
