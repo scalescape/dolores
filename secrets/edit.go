@@ -16,7 +16,7 @@ type EditConfig struct {
 
 func (sm SecretManager) Edit(cfg EditConfig) error {
 	req := client.FetchSecretRequest{Name: cfg.Name, Environment: cfg.Environment}
-	data, err := sm.FetchSecrets(req)
+	data, err := sm.client.FetchSecrets(req)
 	if err != nil {
 		return err
 	}

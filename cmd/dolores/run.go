@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/scalescape/dolores/client"
 	"github.com/scalescape/dolores/lib"
 	"github.com/scalescape/dolores/secrets"
 	"github.com/urfave/cli/v2"
@@ -182,7 +181,7 @@ func (c *Runner) runAction(ctx *cli.Context) error {
 	return nil
 }
 
-func NewRunner(client func(context.Context) *client.Client) Runner {
+func NewRunner(client GetClient) Runner {
 	cmd := Runner{
 		rcli:         client,
 		wg:           new(sync.WaitGroup),
