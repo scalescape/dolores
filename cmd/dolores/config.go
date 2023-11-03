@@ -36,7 +36,7 @@ func NewConfig(client GetClient) *ConfigCommand {
 func (c *ConfigCommand) editAction(ctx *cli.Context) error {
 	rcli := c.rcli(ctx.Context)
 	env := ctx.String("environment")
-	ctx.Set("key-file", rcli.KeyFile)
+	ctx.Set("key-file", rcli.GetKeyFile())
 	log := c.log.With().Str("cmd", "config.edit").Str("environment", env).Logger()
 	dcfg, err := parseDecryptConfig(ctx)
 	if err != nil {
@@ -68,7 +68,7 @@ func (c *ConfigCommand) encryptAction(ctx *cli.Context) error {
 func (c *ConfigCommand) decryptAction(ctx *cli.Context) error {
 	rcli := c.rcli(ctx.Context)
 
-	ctx.Set("key-file", rcli.KeyFile)
+	ctx.Set("key-file", rcli.GetKeyFile())
 	req, err := parseDecryptConfig(ctx)
 	if err != nil {
 		return err

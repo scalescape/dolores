@@ -15,7 +15,7 @@ type Client struct {
 	prefix  string
 	ctx     context.Context //nolint:containedctx
 	log     zerolog.Logger
-	KeyFile string
+	keyFile string
 }
 
 type EncryptedConfig struct {
@@ -78,6 +78,10 @@ func (c *Client) GetOrgPublicKeys(env string) (OrgPublicKeys, error) {
 	return OrgPublicKeys{Recipients: recps}, nil
 }
 
+func (c *Client) GetKeyFile() string {
+	return c.keyFile
+}
+
 func New(ctx context.Context, cfg config.Client) (*Client, error) {
 	if err := cfg.Valid(); err != nil {
 		return nil, err
@@ -93,7 +97,7 @@ func New(ctx context.Context, cfg config.Client) (*Client, error) {
 		bucket:  cfg.BucketName(),
 		prefix:  cfg.StoragePrefix,
 		log:     log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Logger(),
-		KeyFile: cfg.KeyFile(),
+		keyFile: cfg.KeyFile(),
 	}
 	return cli, nil
 }
