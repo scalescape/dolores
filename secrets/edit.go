@@ -20,7 +20,7 @@ func (sm SecretManager) Edit(cfg EditConfig) error {
 	if err != nil {
 		return err
 	}
-	dc := &dolores.DecryptConfig{KeyFile: sm.Client.KeyFile, Key: cfg.Key}
+	dc := &dolores.DecryptConfig{KeyFile: cfg.KeyFile, Key: cfg.Key}
 	dec, err := dolores.NewDecryptor(dc)
 	if err != nil {
 		return err

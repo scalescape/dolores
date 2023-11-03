@@ -14,10 +14,12 @@ import (
 func parseDecryptConfig(ctx *cli.Context) (secrets.DecryptConfig, error) {
 	env := ctx.String("environment")
 	name := ctx.String("name")
+	keyFile := ctx.String("key-file")
 	req := secrets.DecryptConfig{
 		Environment: env,
 		Name:        name,
 		Out:         os.Stdout,
+		KeyFile:     keyFile,
 	}
 	if err := req.Valid(); err != nil {
 		return secrets.DecryptConfig{}, fmt.Errorf("pass appropriate key or key-file to decrypt: %w", err)
