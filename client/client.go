@@ -11,10 +11,11 @@ import (
 
 type Client struct {
 	Service
-	bucket string
-	prefix string
-	ctx    context.Context //nolint:containedctx
-	log    zerolog.Logger
+	bucket  string
+	prefix  string
+	ctx     context.Context //nolint:containedctx
+	log     zerolog.Logger
+	KeyFile string
 }
 
 type EncryptedConfig struct {
@@ -75,9 +76,12 @@ func New(ctx context.Context, cfg config.Client) (*Client, error) {
 		return nil, err
 	}
 	cli := &Client{
-		ctx: ctx, Service: Service{store: st},
-		bucket: cfg.BucketName(), prefix: cfg.StoragePrefix,
-		log: log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Logger(),
+		ctx:     ctx,
+		Service: Service{store: st},
+		bucket:  cfg.BucketName(),
+		prefix:  cfg.StoragePrefix,
+		log:     log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Logger(),
+		KeyFile: cfg.KeyFile(),
 	}
 	return cli, nil
 }

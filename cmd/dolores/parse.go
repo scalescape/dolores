@@ -34,7 +34,8 @@ func parseDecryptConfig(ctx *cli.Context) (secrets.DecryptConfig, error) {
 		Name:        name,
 		Out:         os.Stdout,
 	}
-	parseKeyConfig(ctx, &req)
+	// using KeyFile from dolores.json
+	// parseKeyConfig(ctx, &req)
 	if err := req.Valid(); err != nil {
 		return secrets.DecryptConfig{}, fmt.Errorf("pass appropriate key or key-file to decrypt: %w", err)
 	}

@@ -85,9 +85,10 @@ func (c DecryptConfig) Output() io.Writer {
 }
 
 func (c DecryptConfig) Valid() error {
-	if c.KeyFile == "" && c.Key == "" {
-		return ErrInvalidKeyFile
-	}
+	// using KeyFile from dolores.json
+	// if c.KeyFile == "" && c.Key == "" {
+	// 	return ErrInvalidKeyFile
+	// }
 	if c.Name == "" {
 		return ErrInvalidConfigName
 	}
@@ -109,7 +110,7 @@ func (sm SecretManager) Decrypt(cfg DecryptConfig) error {
 	if err != nil {
 		return err
 	}
-	dc := &dolores.DecryptConfig{KeyFile: cfg.KeyFile, Key: cfg.Key}
+	dc := &dolores.DecryptConfig{KeyFile: sm.Client.KeyFile, Key: cfg.Key}
 	dec, err := dolores.NewDecryptor(dc)
 	if err != nil {
 		return err
