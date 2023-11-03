@@ -5,18 +5,17 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/scalescape/dolores/client"
 	"github.com/scalescape/dolores/secrets"
 	"github.com/urfave/cli/v2"
 )
 
 type ConfigCommand struct {
 	*cli.Command
-	rcli func(context.Context) *client.Client
+	rcli func(context.Context) secretsClient
 	log  zerolog.Logger
 }
 
-func NewConfig(client func(context.Context) *client.Client) *ConfigCommand {
+func NewConfig(client GetClient) *ConfigCommand {
 	log := log.With().Str("cmd", "config").Logger()
 	cmd := &cli.Command{
 		Name:  "config",
