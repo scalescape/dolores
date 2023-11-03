@@ -85,10 +85,6 @@ func (c DecryptConfig) Output() io.Writer {
 }
 
 func (c DecryptConfig) Valid() error {
-	// using KeyFile from dolores.json
-	// if c.KeyFile == "" && c.Key == "" {
-	// 	return ErrInvalidKeyFile
-	// }
 	if c.Name == "" {
 		return ErrInvalidConfigName
 	}

@@ -156,7 +156,6 @@ func (c *Runner) parse(ctx *cli.Context) error {
 			Environment: c.environment,
 			Out:         c.configBuffer,
 		}
-		parseKeyConfig(ctx, &c.DecryptConfig)
 		if err := c.DecryptConfig.Valid(); err != nil {
 			return err
 		}
