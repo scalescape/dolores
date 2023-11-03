@@ -22,10 +22,10 @@ var ErrInvalidEnvironment = errors.New("invalid environment")
 type InitCommand struct {
 	*cli.Command
 	log  zerolog.Logger
-	rcli func(context.Context) *client.Client
+	rcli func(context.Context) secretsClient
 }
 
-type GetClient func(context.Context) *client.Client
+type GetClient func(context.Context) secretsClient
 
 func NewInitCommand(newCli GetClient) *cli.Command {
 	ic := &InitCommand{

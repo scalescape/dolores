@@ -12,10 +12,12 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var (
-	Version = "0.0.1"
-	Sha     = "undefined"
-)
+type secretsClient interface {
+	UploadSecrets(req client.EncryptedConfig) error
+	FetchSecrets(req client.FetchSecretRequest) ([]byte, error)
+	GetOrgPublicKeys(env string) (client.OrgPublicKeys, error)
+	Init(ctx context.Context, bucket string, cfg client.Configuration) error
+}
 
 type CtxKey string
 
@@ -30,7 +32,7 @@ func main() {
 	app := &cli.App{
 		Name:    "Dolores",
 		Usage:   "service configuration management with your own cloud platform",
-		Version: Version,
+		Version: version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name: "environment", Aliases: []string{"env"},
@@ -71,13 +73,18 @@ func main() {
 }
 
 func VersionDisplay(cc *cli.Context) {
-	fmt.Printf("rom %s (%s)", Version, Sha) //nolint
+	fmt.Printf("rom %s (%s)\n", version, commit) //nolint
 }
 
-func newClient(ctx context.Context) *client.Client {
+func newClient(ctx context.Context) secretsClient {
 	env, ok := ctx.Value(EnvValue).(string)
 	if !ok || env == "" {
 		log.Fatal().Msgf("environment not passed properly")
+	}
+	var err error
+	if cfg, err := config.LoadMonartClient(); err == nil {
+		log.Trace().Msgf("creating monart client")
+		return client.NewMonart(ctx, cfg)
 	}
 	cfg, err := config.LoadClient(ctx, env)
 	if err != nil {

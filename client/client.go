@@ -10,7 +10,7 @@ import (
 )
 
 type Client struct {
-	Service
+	Service Service
 	bucket  string
 	prefix  string
 	ctx     context.Context //nolint:containedctx
@@ -22,6 +22,10 @@ type EncryptedConfig struct {
 	Environment string `json:"environment"`
 	Name        string `json:"name"`
 	Data        string `json:"data"`
+}
+
+func (c *Client) Init(ctx context.Context, bucket string, cfg Configuration) error {
+	return c.Service.Init(ctx, bucket, cfg)
 }
 
 func (c *Client) UploadSecrets(req EncryptedConfig) error {
@@ -51,6 +55,14 @@ type Recipient struct {
 
 type OrgPublicKeys struct {
 	Recipients []Recipient `json:"recipients"`
+}
+
+func (pk OrgPublicKeys) RecipientList() []string {
+	result := make([]string, len(pk.Recipients))
+	for i, k := range pk.Recipients {
+		result[i] = k.PublicKey
+	}
+	return result
 }
 
 func (c *Client) GetOrgPublicKeys(env string) (OrgPublicKeys, error) {
