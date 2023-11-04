@@ -91,7 +91,7 @@ func (c DecryptConfig) Output() io.Writer {
 }
 
 func (c DecryptConfig) Valid() error {
-	if c.KeyFile == "" {
+	if c.KeyFile == "" && c.Key == "" {
 		return ErrInvalidKeyFile
 	}
 	if c.Name == "" {

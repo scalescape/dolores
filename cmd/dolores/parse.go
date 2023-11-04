@@ -15,11 +15,21 @@ func parseDecryptConfig(ctx *cli.Context) (secrets.DecryptConfig, error) {
 	env := ctx.String("environment")
 	name := ctx.String("name")
 	keyFile := ctx.String("key-file")
+
+	if keyFile == "" {
+		d, err := config.LoadFromDisk()
+		if err != nil {
+			return secrets.DecryptConfig{}, fmt.Errorf("dolores not initialized yet: %w", err)
+		}
+		keyFile = d.Environments[env].KeyFile
+	}
+
 	req := secrets.DecryptConfig{
 		Environment: env,
 		Name:        name,
 		Out:         os.Stdout,
 		KeyFile:     keyFile,
+		Key:         ctx.String("key"),
 	}
 	if err := req.Valid(); err != nil {
 		return secrets.DecryptConfig{}, fmt.Errorf("pass appropriate key or key-file to decrypt: %w", err)

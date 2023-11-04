@@ -19,9 +19,7 @@ var (
 
 type CtxKey string
 
-var (
-	EnvKey CtxKey = "ctx_environment"
-)
+var EnvKey CtxKey = "ctx_environment"
 
 var (
 	HomePath = os.Getenv("HOME")
