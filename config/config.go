@@ -33,7 +33,6 @@ type Google struct {
 	ApplicationCredentials string `split_words:"true"`
 	StorageBucket          string `split_words:"true"`
 	StoragePrefix          string
-	KeyFile                string
 }
 
 type Metadata struct {
@@ -42,7 +41,6 @@ type Metadata struct {
 	Environment            string    `json:"environment"`
 	CreatedAt              time.Time `json:"created_at"`
 	ApplicationCredentials string    `json:"application_credentials"`
-	KeyFile                string    `json:"key_file"`
 }
 
 type Client struct {
@@ -53,19 +51,12 @@ func (c Client) BucketName() string {
 	return c.Google.StorageBucket
 }
 
-func (c Client) KeyFile() string {
-	return c.Google.KeyFile
-}
-
 func (c Client) Valid() error {
 	if c.Google.ApplicationCredentials == "" {
 		return ErrInvalidGoogleCreds
 	}
 	if c.Google.StorageBucket == "" {
 		return ErrInvalidStorageBucket
-	}
-	if c.Google.KeyFile == "" {
-		return ErrInvalidKeyFile
 	}
 	return nil
 }
@@ -93,10 +84,6 @@ func LoadClient(ctx context.Context, env string) (Client, error) {
 
 	if location := md.Location; location != "" {
 		cfg.Google.StoragePrefix = location
-	}
-
-	if keyfile := d.Environments[env].KeyFile; keyfile != "" {
-		cfg.Google.KeyFile = keyfile
 	}
 
 	if err := cfg.Valid(); err != nil {

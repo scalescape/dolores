@@ -109,10 +109,6 @@ func (s MonartClient) call(req *http.Request, dest any) (*http.Response, error) 
 	return resp, nil
 }
 
-func (s MonartClient) GetKeyFile() string {
-	return ""
-}
-
 func NewMonart(ctx context.Context, cfg *config.Monart) MonartClient {
 	cred := credentials{APIToken: cfg.APIToken, ID: cfg.ID}
 	return MonartClient{cli: http.DefaultClient, cred: cred, ctx: ctx}
