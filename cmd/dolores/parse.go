@@ -12,10 +12,17 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func parseKeyConfig(ctx *cli.Context, cfg *secrets.DecryptConfig) {
+func parseKeyConfig(ctx *cli.Context, cfg *secrets.DecryptConfig) error {
 	log.Trace().Msgf("parsing configuration required to decrypt config")
 	key := ctx.String("key")
 	keyFile := ctx.String("key-file")
+	if keyFile == "" {
+		d, err := config.LoadFromDisk()
+		if err != nil {
+			return fmt.Errorf("dolores not initialized yet: %w", err)
+		}
+		keyFile = d.Environments[cfg.Environment].KeyFile
+	}
 	if keyFile == "" {
 		keyFile = os.Getenv("DOLORES_SECRETS_KEY_FILE")
 	}
@@ -24,6 +31,8 @@ func parseKeyConfig(ctx *cli.Context, cfg *secrets.DecryptConfig) {
 	}
 	cfg.KeyFile = keyFile
 	cfg.Key = key
+
+	return nil
 }
 
 func parseDecryptConfig(ctx *cli.Context) (secrets.DecryptConfig, error) {
@@ -34,7 +43,9 @@ func parseDecryptConfig(ctx *cli.Context) (secrets.DecryptConfig, error) {
 		Name:        name,
 		Out:         os.Stdout,
 	}
-	parseKeyConfig(ctx, &req)
+	if err := parseKeyConfig(ctx, &req); err != nil {
+		return secrets.DecryptConfig{}, fmt.Errorf("unable to load key-file from config: %w", err)
+	}
 	if err := req.Valid(); err != nil {
 		return secrets.DecryptConfig{}, fmt.Errorf("pass appropriate key or key-file to decrypt: %w", err)
 	}
