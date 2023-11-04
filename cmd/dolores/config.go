@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"os"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -77,7 +77,13 @@ func (c *ConfigCommand) decryptAction(ctx *cli.Context) error {
 }
 
 func (c *ConfigCommand) listSecretAction(ctx *cli.Context) error {
-	fmt.Println("List secrets ")
+	env := ctx.String("environment")
+	log := c.log.With().Str("cmd", "config.list").Str("environment", env).Logger()
+	secMan := secrets.NewSecretsManager(log, c.rcli(ctx.Context))
+	req := secrets.ListSecretConfig{Environment: env, Out: os.Stdout}
+	if err := secMan.ListSecret(req); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -144,7 +150,7 @@ func EditCommand(action cli.ActionFunc) *cli.Command {
 
 func ListSecretCommand(action cli.ActionFunc) *cli.Command {
 	return &cli.Command{
-		Name:   "list_secret",
+		Name:   "list",
 		Usage:  "shows the list of secrets uploaded in cloud",
 		Action: action,
 	}

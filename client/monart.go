@@ -11,6 +11,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/config"
+	"github.com/scalescape/dolores/store/google"
 )
 
 type credentials struct {
@@ -107,6 +108,10 @@ func (s MonartClient) call(req *http.Request, dest any) (*http.Response, error) 
 		}
 	}
 	return resp, nil
+}
+
+func (c MonartClient) GetSecretList() ([]google.SecretObject, error) {
+	return nil, nil
 }
 
 func NewMonart(ctx context.Context, cfg *config.Monart) MonartClient {

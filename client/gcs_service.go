@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/config"
+	"github.com/scalescape/dolores/store/google"
 )
 
 var ErrInvalidPublicKeys = errors.New("invalid public keys")
@@ -23,7 +24,7 @@ type Service struct {
 type gcsStore interface {
 	WriteToObject(ctx context.Context, bucketName, fileName string, data []byte) error
 	ReadObject(ctx context.Context, bucketName, fileName string) ([]byte, error)
-	ListObject(ctx context.Context, bucketName, path string) ([]string, error)
+	ListObject(ctx context.Context, bucketName, path string) ([]google.SecretObject, error)
 	ExistsObject(ctx context.Context, bucketName, fileName string) (bool, error)
 }
 
@@ -83,7 +84,7 @@ func (s Service) GetOrgPublicKeys(ctx context.Context, env, bucketName, path str
 	}
 	keys := make([]string, len(resp))
 	for i, obj := range resp {
-		key, err := s.store.ReadObject(ctx, bucketName, obj)
+		key, err := s.store.ReadObject(ctx, bucketName, obj.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read object %s: %w", obj, err)
 		}

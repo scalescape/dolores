@@ -11,12 +11,14 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/scalescape/dolores"
 	"github.com/scalescape/dolores/client"
+	"github.com/scalescape/dolores/store/google"
 )
 
 type secClient interface {
 	FetchSecrets(req client.FetchSecretRequest) ([]byte, error)
 	UploadSecrets(req client.EncryptedConfig) error
 	GetOrgPublicKeys(env string) (client.OrgPublicKeys, error)
+	GetSecretList() ([]google.SecretObject, error)
 }
 
 type EncryptConfig struct {
@@ -132,17 +134,40 @@ func (sm SecretManager) Decrypt(cfg DecryptConfig) error {
 
 type ListSecretConfig struct {
 	Environment string
-	KeyFile     string
 	Out         io.Writer
 }
 
-func (c ListSecretConfig) Valid() error {
-	if c.KeyFile == "" {
-		return ErrInvalidKeyFile
+func (c ListSecretConfig) Output() io.Writer {
+	if c.Out == nil {
+		return os.Stdout
 	}
+	return c.Out
+}
 
+func (c ListSecretConfig) Valid() error {
 	if strings.ToLower(c.Environment) != "production" && strings.ToLower(c.Environment) != "staging" {
 		return ErrInvalidEnvironment
+	}
+	return nil
+}
+
+func (sm SecretManager) ListSecret(cfg ListSecretConfig) error {
+	if err := cfg.Valid(); err != nil {
+		return fmt.Errorf("invalid config: %w", err)
+	}
+	resp, err := sm.client.GetSecretList()
+	if err != nil {
+		return fmt.Errorf("failed to get secrets: %w", err)
+	}
+	if _, err := cfg.Output().Write([]byte(fmt.Sprintf("%-20s %-40s %-40s %-40s\n", "Name", "Bucket", "Create At", "Updated At"))); err != nil {
+		return err
+	}
+	for _, obj := range resp {
+		if !strings.HasSuffix(obj.Name, ".key") && !strings.HasSuffix(obj.Name, "/") {
+			if _, err := cfg.Output().Write([]byte(fmt.Sprintf("%-20s %-40s %-40s %-40s\n", obj.Name, obj.Bucket, obj.CreatedAt, obj.UpdatedAt))); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

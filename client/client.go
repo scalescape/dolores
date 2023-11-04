@@ -77,6 +77,15 @@ func (c *Client) GetOrgPublicKeys(env string) (OrgPublicKeys, error) {
 	return OrgPublicKeys{Recipients: recps}, nil
 }
 
+func (c *Client) GetSecretList() ([]google.SecretObject, error) {
+	resp, err := c.Service.store.ListObject(c.ctx, c.bucket, c.prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 func New(ctx context.Context, cfg config.Client) (*Client, error) {
 	if err := cfg.Valid(); err != nil {
 		return nil, err
