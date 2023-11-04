@@ -14,14 +14,12 @@ import (
 var (
 	ErrInvalidGoogleCreds   = errors.New("invalid google application credentials")
 	ErrInvalidStorageBucket = errors.New("invalid storage bucket")
+	ErrInvalidKeyFile       = errors.New("invalid key file")
 )
 
 type CtxKey string
 
-var (
-	EnvKey   CtxKey = "ctx_environment"
-	CredsKey CtxKey = "ctx_application_creds"
-)
+var EnvKey CtxKey = "ctx_environment"
 
 var (
 	HomePath = os.Getenv("HOME")
@@ -36,10 +34,11 @@ type Google struct {
 }
 
 type Metadata struct {
-	Bucket      string    `json:"bucket"`
-	Location    string    `json:"location"`
-	Environment string    `json:"environment"`
-	CreatedAt   time.Time `json:"created_at"`
+	Bucket                 string    `json:"bucket"`
+	Location               string    `json:"location"`
+	Environment            string    `json:"environment"`
+	CreatedAt              time.Time `json:"created_at"`
+	ApplicationCredentials string    `json:"application_credentials"`
 }
 
 type Client struct {
@@ -70,17 +69,21 @@ func LoadClient(ctx context.Context, env string) (Client, error) {
 		return Client{}, fmt.Errorf("processing config: %w", err)
 	}
 
+	md := d.Environments[env].Metadata
 	if cfg.Google.ApplicationCredentials == "" {
-		if creds, ok := ctx.Value(CredsKey).(string); ok {
+		if creds := md.ApplicationCredentials; creds != "" {
 			cfg.Google.ApplicationCredentials = creds
 		}
 	}
-	md := d.Environments[env].Metadata
-	bucket := md.Bucket
-	if bucket != "" {
+
+	if bucket := md.Bucket; bucket != "" {
 		cfg.Google.StorageBucket = bucket
-		cfg.Google.StoragePrefix = md.Location
 	}
+
+	if location := md.Location; location != "" {
+		cfg.Google.StoragePrefix = location
+	}
+
 	if err := cfg.Valid(); err != nil {
 		return Client{}, err
 	}

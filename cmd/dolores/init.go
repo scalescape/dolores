@@ -22,10 +22,10 @@ var ErrInvalidEnvironment = errors.New("invalid environment")
 type InitCommand struct {
 	*cli.Command
 	log  zerolog.Logger
-	rcli func(context.Context) *client.Client
+	rcli func(context.Context) secretsClient
 }
 
-type GetClient func(context.Context) *client.Client
+type GetClient func(context.Context) secretsClient
 
 func NewInitCommand(newCli GetClient) *cli.Command {
 	ic := &InitCommand{
@@ -49,10 +49,11 @@ type Input struct {
 
 func (inp Input) ToMetadata(env string) config.Metadata {
 	return config.Metadata{
-		Bucket:      inp.Bucket,
-		Location:    inp.Location,
-		CreatedAt:   time.Now(),
-		Environment: env,
+		Bucket:                 inp.Bucket,
+		Location:               inp.Location,
+		CreatedAt:              time.Now(),
+		Environment:            env,
+		ApplicationCredentials: inp.ApplicationCredentials,
 	}
 }
 
@@ -162,10 +163,9 @@ func (c *InitCommand) initialize(cctx *cli.Context) error {
 	if err := d.SaveToDisk(); err != nil {
 		return fmt.Errorf("error saving dolores config: %w", err)
 	}
-	ctx := context.WithValue(cctx.Context, config.CredsKey, inp.ApplicationCredentials)
-	cli := c.rcli(ctx)
+	cli := c.rcli(cctx.Context)
 	cfg := client.Configuration{PublicKey: publicKey, Metadata: md, UserID: inp.UserID}
-	if err := cli.Init(ctx, md.Bucket, cfg); err != nil {
+	if err := cli.Init(cctx.Context, md.Bucket, cfg); err != nil {
 		return err
 	}
 	log.Info().Msgf("successfully initialized dolores")

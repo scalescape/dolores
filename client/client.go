@@ -10,17 +10,21 @@ import (
 )
 
 type Client struct {
-	Service
-	bucket string
-	prefix string
-	ctx    context.Context //nolint:containedctx
-	log    zerolog.Logger
+	Service Service
+	bucket  string
+	prefix  string
+	ctx     context.Context //nolint:containedctx
+	log     zerolog.Logger
 }
 
 type EncryptedConfig struct {
 	Environment string `json:"environment"`
 	Name        string `json:"name"`
 	Data        string `json:"data"`
+}
+
+func (c *Client) Init(ctx context.Context, bucket string, cfg Configuration) error {
+	return c.Service.Init(ctx, bucket, cfg)
 }
 
 func (c *Client) UploadSecrets(req EncryptedConfig) error {
@@ -52,6 +56,14 @@ type OrgPublicKeys struct {
 	Recipients []Recipient `json:"recipients"`
 }
 
+func (pk OrgPublicKeys) RecipientList() []string {
+	result := make([]string, len(pk.Recipients))
+	for i, k := range pk.Recipients {
+		result[i] = k.PublicKey
+	}
+	return result
+}
+
 func (c *Client) GetOrgPublicKeys(env string) (OrgPublicKeys, error) {
 	c.log.Debug().Msgf("fetching public keys for env: %s", env)
 	keys, err := c.Service.GetOrgPublicKeys(c.ctx, env, c.bucket, c.prefix+"/keys")
@@ -75,9 +87,11 @@ func New(ctx context.Context, cfg config.Client) (*Client, error) {
 		return nil, err
 	}
 	cli := &Client{
-		ctx: ctx, Service: Service{store: st},
-		bucket: cfg.BucketName(), prefix: cfg.StoragePrefix,
-		log: log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Logger(),
+		ctx:     ctx,
+		Service: Service{store: st},
+		bucket:  cfg.BucketName(),
+		prefix:  cfg.StoragePrefix,
+		log:     log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Logger(),
 	}
 	return cli, nil
 }

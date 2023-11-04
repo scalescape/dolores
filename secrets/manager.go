@@ -13,6 +13,12 @@ import (
 	"github.com/scalescape/dolores/client"
 )
 
+type secClient interface {
+	FetchSecrets(req client.FetchSecretRequest) ([]byte, error)
+	UploadSecrets(req client.EncryptedConfig) error
+	GetOrgPublicKeys(env string) (client.OrgPublicKeys, error)
+}
+
 type EncryptConfig struct {
 	Environment string
 	FileName    string
@@ -28,8 +34,8 @@ var (
 )
 
 type SecretManager struct {
-	*client.Client
-	log zerolog.Logger
+	client secClient
+	log    zerolog.Logger
 }
 
 func (sm SecretManager) Encrypt(req EncryptConfig) error {
@@ -41,7 +47,7 @@ func (sm SecretManager) Encrypt(req EncryptConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to load file: %w", err)
 	}
-	resp, err := sm.Client.GetOrgPublicKeys(env)
+	resp, err := sm.client.GetOrgPublicKeys(env)
 	if err != nil {
 		return fmt.Errorf("failed to get keys: %w", err)
 	}
@@ -63,7 +69,7 @@ func (sm SecretManager) Encrypt(req EncryptConfig) error {
 		Name:        name,
 		Data:        base64.StdEncoding.EncodeToString(data),
 	}
-	if err := sm.Client.UploadSecrets(ureq); err != nil {
+	if err := sm.client.UploadSecrets(ureq); err != nil {
 		return err
 	}
 	return nil
@@ -105,7 +111,7 @@ func (sm SecretManager) Decrypt(cfg DecryptConfig) error {
 		return fmt.Errorf("invalid config: %w: %v", ErrInvalidDecryptConfig, err)
 	}
 	req := client.FetchSecretRequest{Name: cfg.Name, Environment: cfg.Environment}
-	data, err := sm.FetchSecrets(req)
+	data, err := sm.client.FetchSecrets(req)
 	if err != nil {
 		return err
 	}
@@ -141,6 +147,6 @@ func (c ListSecretConfig) Valid() error {
 	return nil
 }
 
-func NewSecretsManager(log zerolog.Logger, rcli *client.Client) SecretManager {
-	return SecretManager{Client: rcli, log: log}
+func NewSecretsManager(log zerolog.Logger, rcli secClient) SecretManager {
+	return SecretManager{client: rcli, log: log}
 }

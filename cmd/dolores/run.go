@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/scalescape/dolores/client"
 	"github.com/scalescape/dolores/lib"
 	"github.com/scalescape/dolores/secrets"
 	"github.com/urfave/cli/v2"
@@ -156,7 +155,9 @@ func (c *Runner) parse(ctx *cli.Context) error {
 			Environment: c.environment,
 			Out:         c.configBuffer,
 		}
-		parseKeyConfig(ctx, &c.DecryptConfig)
+		if err := parseKeyConfig(ctx, &c.DecryptConfig); err != nil {
+			return err
+		}
 		if err := c.DecryptConfig.Valid(); err != nil {
 			return err
 		}
@@ -182,7 +183,7 @@ func (c *Runner) runAction(ctx *cli.Context) error {
 	return nil
 }
 
-func NewRunner(client func(context.Context) *client.Client) Runner {
+func NewRunner(client GetClient) Runner {
 	cmd := Runner{
 		rcli:         client,
 		wg:           new(sync.WaitGroup),
