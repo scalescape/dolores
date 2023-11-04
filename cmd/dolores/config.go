@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -31,6 +32,7 @@ func NewConfig(client func(context.Context) *client.Client) *ConfigCommand {
 	cfg.Subcommands = append(cfg.Subcommands, EncryptCommand(cfg.encryptAction))
 	cfg.Subcommands = append(cfg.Subcommands, DecryptCommand(cfg.decryptAction))
 	cfg.Subcommands = append(cfg.Subcommands, EditCommand(cfg.editAction))
+	cfg.Subcommands = append(cfg.Subcommands, ListSecretCommand(cfg.listSecretAction))
 	return cfg
 }
 
@@ -73,6 +75,11 @@ func (c *ConfigCommand) decryptAction(ctx *cli.Context) error {
 	log.Trace().Str("cmd", "config.decrypt").Msgf("running decryption")
 	sec := secrets.NewSecretsManager(log, c.rcli(ctx.Context))
 	return sec.Decrypt(req)
+}
+
+func (c *ConfigCommand) listSecretAction(ctx *cli.Context) error {
+	fmt.Println("List secrets ")
+	return nil
 }
 
 func EncryptCommand(action cli.ActionFunc) *cli.Command {
@@ -132,6 +139,14 @@ func EditCommand(action cli.ActionFunc) *cli.Command {
 				Name: "key-file",
 			},
 		},
+		Action: action,
+	}
+}
+
+func ListSecretCommand(action cli.ActionFunc) *cli.Command {
+	return &cli.Command{
+		Name:   "list_secret",
+		Usage:  "shows the list of secrets uploaded in cloud",
 		Action: action,
 	}
 }

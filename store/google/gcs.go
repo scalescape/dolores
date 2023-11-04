@@ -105,7 +105,7 @@ func (s StorageClient) ListBuckets(ctx context.Context) ([]string, error) {
 	return buckets, nil
 }
 
-func (s StorageClient) ListOjbect(ctx context.Context, bucketName, path string) ([]string, error) {
+func (s StorageClient) ListObject(ctx context.Context, bucketName, path string) ([]string, error) {
 	bucket := s.Client.Bucket(bucketName)
 	if _, err := bucket.Attrs(ctx); err != nil {
 		return nil, fmt.Errorf("failed to get bucket: %w", err)

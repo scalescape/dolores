@@ -23,7 +23,7 @@ type Service struct {
 type gcsStore interface {
 	WriteToObject(ctx context.Context, bucketName, fileName string, data []byte) error
 	ReadObject(ctx context.Context, bucketName, fileName string) ([]byte, error)
-	ListOjbect(ctx context.Context, bucketName, path string) ([]string, error)
+	ListObject(ctx context.Context, bucketName, path string) ([]string, error)
 	ExistsObject(ctx context.Context, bucketName, fileName string) (bool, error)
 }
 
@@ -77,7 +77,7 @@ func (s Service) GetOrgPublicKeys(ctx context.Context, env, bucketName, path str
 	if pubKey != "" {
 		return []string{pubKey}, nil
 	}
-	resp, err := s.store.ListOjbect(ctx, bucketName, path)
+	resp, err := s.store.ListObject(ctx, bucketName, path)
 	if err != nil {
 		return nil, fmt.Errorf("error listing objects: %w", err)
 	}

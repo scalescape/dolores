@@ -124,6 +124,23 @@ func (sm SecretManager) Decrypt(cfg DecryptConfig) error {
 	return nil
 }
 
+type ListSecretConfig struct {
+	Environment string
+	KeyFile     string
+	Out         io.Writer
+}
+
+func (c ListSecretConfig) Valid() error {
+	if c.KeyFile == "" {
+		return ErrInvalidKeyFile
+	}
+
+	if strings.ToLower(c.Environment) != "production" && strings.ToLower(c.Environment) != "staging" {
+		return ErrInvalidEnvironment
+	}
+	return nil
+}
+
 func NewSecretsManager(log zerolog.Logger, rcli *client.Client) SecretManager {
 	return SecretManager{Client: rcli, log: log}
 }
