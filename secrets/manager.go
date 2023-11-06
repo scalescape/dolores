@@ -18,7 +18,7 @@ type secClient interface {
 	FetchSecrets(req client.FetchSecretRequest) ([]byte, error)
 	UploadSecrets(req client.EncryptedConfig) error
 	GetOrgPublicKeys(env string) (client.OrgPublicKeys, error)
-	GetSecretList() ([]google.SecretObject, error)
+	GetSecretList(cfg client.GetSecretListConfig) ([]google.SecretObject, error)
 }
 
 type EncryptConfig struct {
@@ -137,7 +137,7 @@ type ListSecretConfig struct {
 	Out         io.Writer
 }
 
-func (c ListSecretConfig) Output() io.Writer {
+func (c ListSecretConfig) output() io.Writer {
 	if c.Out == nil {
 		return os.Stdout
 	}
@@ -145,7 +145,8 @@ func (c ListSecretConfig) Output() io.Writer {
 }
 
 func (c ListSecretConfig) Valid() error {
-	if strings.ToLower(c.Environment) != "production" && strings.ToLower(c.Environment) != "staging" {
+	env := strings.ToLower(c.Environment)
+	if env != "production" && env != "staging" {
 		return ErrInvalidEnvironment
 	}
 	return nil
@@ -155,16 +156,24 @@ func (sm SecretManager) ListSecret(cfg ListSecretConfig) error {
 	if err := cfg.Valid(); err != nil {
 		return fmt.Errorf("invalid config: %w", err)
 	}
-	resp, err := sm.client.GetSecretList()
+	req := client.GetSecretListConfig{Environment: cfg.Environment}
+	resp, err := sm.client.GetSecretList(req)
 	if err != nil {
 		return fmt.Errorf("failed to get secrets: %w", err)
 	}
-	if _, err := cfg.Output().Write([]byte(fmt.Sprintf("%-20s %-40s %-40s %-40s\n", "Name", "Bucket", "Create At", "Updated At"))); err != nil {
+	if _, err := cfg.output().Write([]byte(fmt.Sprintf("%-10s %-50s %-30s %-30s\n", "Name", "Location", "Created At UTC", "Updated At UTC"))); err != nil {
 		return err
 	}
 	for _, obj := range resp {
 		if !strings.HasSuffix(obj.Name, ".key") && !strings.HasSuffix(obj.Name, "/") {
-			if _, err := cfg.Output().Write([]byte(fmt.Sprintf("%-20s %-40s %-40s %-40s\n", obj.Name, obj.Bucket, obj.CreatedAt, obj.UpdatedAt))); err != nil {
+			arr := strings.SplitN(obj.Name, "/", 2)
+			name := obj.Name
+			if len(arr) == 2 {
+				name = arr[1]
+			}
+			createdAt := obj.CreatedAt.Format("2000-01-02 15:04:05.999")
+			updatedAt := obj.UpdatedAt.Format("2000-01-02 15:04:05.999")
+			if _, err := cfg.output().Write([]byte(fmt.Sprintf("%-10s %-50s %-30s %-30s\n", name, obj.Location, createdAt, updatedAt))); err != nil {
 				return err
 			}
 		}

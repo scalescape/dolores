@@ -77,13 +77,15 @@ func (c *Client) GetOrgPublicKeys(env string) (OrgPublicKeys, error) {
 	return OrgPublicKeys{Recipients: recps}, nil
 }
 
-func (c *Client) GetSecretList() ([]google.SecretObject, error) {
-	resp, err := c.Service.store.ListObject(c.ctx, c.bucket, c.prefix)
-	if err != nil {
-		return nil, err
-	}
+type GetSecretListConfig struct {
+	Environment string `json:"environment"`
+}
+type GetSecretListResponse struct {
+	Secrets []google.SecretObject `json:"secrets"`
+}
 
-	return resp, nil
+func (c *Client) GetSecretList(cfg GetSecretListConfig) ([]google.SecretObject, error) {
+	return c.Service.GetObjList(c.ctx, c.bucket, c.prefix)
 }
 
 func New(ctx context.Context, cfg config.Client) (*Client, error) {

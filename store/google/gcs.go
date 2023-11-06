@@ -28,7 +28,7 @@ type Config struct {
 
 type SecretObject struct {
 	Name      string    `json:"name"`
-	Bucket    string    `json:"bucket"`
+	Location  string    `json:"location"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -128,7 +128,7 @@ func (s StorageClient) ListObject(ctx context.Context, bucketName, path string) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to iterate object list: %w", err)
 		}
-		o := SecretObject{Name: attrs.Name, CreatedAt: attrs.Created, UpdatedAt: attrs.Updated, Bucket: attrs.Bucket}
+		o := SecretObject{Name: attrs.Name, CreatedAt: attrs.Created, UpdatedAt: attrs.Updated, Location: fmt.Sprintf("%s/%s", attrs.Bucket, attrs.Name)}
 		objs = append(objs, o)
 	}
 	log.Trace().Msgf("list of objects from path: %s %+v", path, objs)

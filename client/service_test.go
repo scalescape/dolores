@@ -7,6 +7,7 @@ import (
 
 	"github.com/scalescape/dolores/client"
 	"github.com/scalescape/dolores/config"
+	"github.com/scalescape/dolores/store/google"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -38,9 +39,9 @@ func (m *mockGCS) ReadObject(ctx context.Context, bucketName, fileName string) (
 	return args.Get(0).([]byte), args.Error(1)
 }
 
-func (m *mockGCS) ListObject(ctx context.Context, bucketName, path string) ([]string, error) {
+func (m *mockGCS) ListObject(ctx context.Context, bucketName, path string) ([]google.SecretObject, error) {
 	args := m.Called(ctx, bucketName, path)
-	return args.Get(0).([]string), args.Error(1)
+	return args.Get(0).([]google.SecretObject), args.Error(1)
 }
 
 func (m *mockGCS) ExistsObject(ctx context.Context, bucketName, fileName string) (bool, error) {

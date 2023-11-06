@@ -18,7 +18,7 @@ type secretsClient interface {
 	FetchSecrets(req client.FetchSecretRequest) ([]byte, error)
 	GetOrgPublicKeys(env string) (client.OrgPublicKeys, error)
 	Init(ctx context.Context, bucket string, cfg client.Configuration) error
-	GetSecretList() ([]google.SecretObject, error)
+	GetSecretList(req client.GetSecretListConfig) ([]google.SecretObject, error)
 }
 
 type CtxKey string

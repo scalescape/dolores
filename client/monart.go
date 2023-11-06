@@ -87,6 +87,19 @@ func (s MonartClient) FetchSecrets(fetchReq FetchSecretRequest) ([]byte, error) 
 	return sec, nil
 }
 
+func (s MonartClient) GetSecretList(cfg GetSecretListConfig) ([]google.SecretObject, error) {
+	path := fmt.Sprintf("/environment/%s/secrets", cfg.Environment)
+	req, err := http.NewRequest(http.MethodGet, s.serverURL(path), nil)
+	if err != nil {
+		return nil, fmt.Errorf("unable to build Get SecretList request: %w", err)
+	}
+	result := new(GetSecretListResponse)
+	if _, err := s.call(req, &result); err != nil {
+		return nil, err
+	}
+	return result.Secrets, nil
+}
+
 func (s MonartClient) serverURL(path string) string {
 	return "https://relyonmetrics.com/api/" + path
 }
@@ -108,10 +121,6 @@ func (s MonartClient) call(req *http.Request, dest any) (*http.Response, error) 
 		}
 	}
 	return resp, nil
-}
-
-func (c MonartClient) GetSecretList() ([]google.SecretObject, error) {
-	return nil, nil
 }
 
 func NewMonart(ctx context.Context, cfg *config.Monart) MonartClient {
