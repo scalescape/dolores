@@ -11,7 +11,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/config"
-	"github.com/scalescape/dolores/store/google"
 )
 
 type credentials struct {
@@ -87,13 +86,13 @@ func (s MonartClient) FetchSecrets(fetchReq FetchSecretRequest) ([]byte, error) 
 	return sec, nil
 }
 
-func (s MonartClient) GetSecretList(cfg GetSecretListConfig) ([]google.SecretObject, error) {
-	path := fmt.Sprintf("/environment/%s/secrets", cfg.Environment)
+func (s MonartClient) GetSecretList(cfg SecretListConfig) ([]SecretObject, error) {
+	path := fmt.Sprintf("environment/%s/secrets", cfg.Environment)
 	req, err := http.NewRequest(http.MethodGet, s.serverURL(path), nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build Get SecretList request: %w", err)
 	}
-	result := new(GetSecretListResponse)
+	result := new(SecretListResponse)
 	if _, err := s.call(req, &result); err != nil {
 		return nil, err
 	}

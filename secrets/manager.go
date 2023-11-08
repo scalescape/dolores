@@ -11,14 +11,13 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/scalescape/dolores"
 	"github.com/scalescape/dolores/client"
-	"github.com/scalescape/dolores/store/google"
 )
 
 type secClient interface {
 	FetchSecrets(req client.FetchSecretRequest) ([]byte, error)
 	UploadSecrets(req client.EncryptedConfig) error
 	GetOrgPublicKeys(env string) (client.OrgPublicKeys, error)
-	GetSecretList(cfg client.GetSecretListConfig) ([]google.SecretObject, error)
+	GetSecretList(cfg client.SecretListConfig) ([]client.SecretObject, error)
 }
 
 type EncryptConfig struct {
@@ -156,7 +155,7 @@ func (sm SecretManager) ListSecret(cfg ListSecretConfig) error {
 	if err := cfg.Valid(); err != nil {
 		return fmt.Errorf("invalid config: %w", err)
 	}
-	req := client.GetSecretListConfig{Environment: cfg.Environment}
+	req := client.SecretListConfig{Environment: cfg.Environment}
 	resp, err := sm.client.GetSecretList(req)
 	if err != nil {
 		return fmt.Errorf("failed to get secrets: %w", err)

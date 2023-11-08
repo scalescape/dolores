@@ -24,7 +24,7 @@ type Service struct {
 type gcsStore interface {
 	WriteToObject(ctx context.Context, bucketName, fileName string, data []byte) error
 	ReadObject(ctx context.Context, bucketName, fileName string) ([]byte, error)
-	ListObject(ctx context.Context, bucketName, path string) ([]google.SecretObject, error)
+	ListObject(ctx context.Context, bucketName, path string) ([]google.Object, error)
 	ExistsObject(ctx context.Context, bucketName, fileName string) (bool, error)
 }
 
@@ -138,7 +138,7 @@ func (s Service) saveObject(ctx context.Context, bucket, fname string, md any) e
 	return s.store.WriteToObject(ctx, bucket, fname, data)
 }
 
-func (s Service) GetObjList(ctx context.Context, bucket, path string) ([]google.SecretObject, error) {
+func (s Service) GetObjList(ctx context.Context, bucket, path string) ([]google.Object, error) {
 	resp, err := s.store.ListObject(ctx, bucket, path)
 	if err != nil {
 		return nil, err

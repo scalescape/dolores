@@ -9,7 +9,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/client"
 	"github.com/scalescape/dolores/config"
-	"github.com/scalescape/dolores/store/google"
 	"github.com/urfave/cli/v2"
 )
 
@@ -18,7 +17,7 @@ type secretsClient interface {
 	FetchSecrets(req client.FetchSecretRequest) ([]byte, error)
 	GetOrgPublicKeys(env string) (client.OrgPublicKeys, error)
 	Init(ctx context.Context, bucket string, cfg client.Configuration) error
-	GetSecretList(req client.GetSecretListConfig) ([]google.SecretObject, error)
+	GetSecretList(req client.SecretListConfig) ([]client.SecretObject, error)
 }
 
 type CtxKey string
