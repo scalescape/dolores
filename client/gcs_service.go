@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/config"
+	"github.com/scalescape/dolores/store/google"
 )
 
 var ErrInvalidPublicKeys = errors.New("invalid public keys")
@@ -23,7 +24,7 @@ type Service struct {
 type gcsStore interface {
 	WriteToObject(ctx context.Context, bucketName, fileName string, data []byte) error
 	ReadObject(ctx context.Context, bucketName, fileName string) ([]byte, error)
-	ListOjbect(ctx context.Context, bucketName, path string) ([]string, error)
+	ListObject(ctx context.Context, bucketName, path string) ([]google.Object, error)
 	ExistsObject(ctx context.Context, bucketName, fileName string) (bool, error)
 }
 
@@ -77,13 +78,13 @@ func (s Service) GetOrgPublicKeys(ctx context.Context, env, bucketName, path str
 	if pubKey != "" {
 		return []string{pubKey}, nil
 	}
-	resp, err := s.store.ListOjbect(ctx, bucketName, path)
+	resp, err := s.ListObject(ctx, bucketName, path)
 	if err != nil {
 		return nil, fmt.Errorf("error listing objects: %w", err)
 	}
 	keys := make([]string, len(resp))
 	for i, obj := range resp {
-		key, err := s.store.ReadObject(ctx, bucketName, obj)
+		key, err := s.store.ReadObject(ctx, bucketName, obj.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read object %s: %w", obj, err)
 		}
@@ -135,6 +136,14 @@ func (s Service) saveObject(ctx context.Context, bucket, fname string, md any) e
 		return err
 	}
 	return s.store.WriteToObject(ctx, bucket, fname, data)
+}
+
+func (s Service) ListObject(ctx context.Context, bucket, path string) ([]google.Object, error) {
+	resp, err := s.store.ListObject(ctx, bucket, path)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 func NewService(st gcsStore) Service {

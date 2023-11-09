@@ -7,6 +7,7 @@ import (
 
 	"github.com/scalescape/dolores/client"
 	"github.com/scalescape/dolores/config"
+	"github.com/scalescape/dolores/store/google"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -38,9 +39,9 @@ func (m *mockGCS) ReadObject(ctx context.Context, bucketName, fileName string) (
 	return args.Get(0).([]byte), args.Error(1)
 }
 
-func (m *mockGCS) ListOjbect(ctx context.Context, bucketName, path string) ([]string, error) {
+func (m *mockGCS) ListObject(ctx context.Context, bucketName, path string) ([]google.Object, error) {
 	args := m.Called(ctx, bucketName, path)
-	return args.Get(0).([]string), args.Error(1)
+	return args.Get(0).([]google.Object), args.Error(1)
 }
 
 func (m *mockGCS) ExistsObject(ctx context.Context, bucketName, fileName string) (bool, error) {
@@ -69,8 +70,8 @@ func (s *serviceSuite) TestShouldNotOverwriteMetadata() {
 		PublicKey: "public_key",
 		Metadata:  config.Metadata{Location: "secrets"},
 		UserID:    "test_user"}
-	s.gcs.On("ExistsObject", mock.AnythingOfType("*context.emptyCtx"), s.bucket, name).Return(true, nil).Once()
-	s.gcs.On("WriteToObject", mock.AnythingOfType("*context.emptyCtx"), s.bucket, "secrets/keys/test_user.key", []byte(cfg.PublicKey)).Return(nil).Once()
+	s.gcs.On("ExistsObject", mock.AnythingOfType("context.backgroundCtx"), s.bucket, name).Return(true, nil).Once()
+	s.gcs.On("WriteToObject", mock.AnythingOfType("context.backgroundCtx"), s.bucket, "secrets/keys/test_user.key", []byte(cfg.PublicKey)).Return(nil).Once()
 
 	err := s.Service.Init(s.ctx, s.bucket, cfg)
 

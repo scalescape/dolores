@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/scalescape/dolores"
@@ -17,6 +18,7 @@ type secClient interface {
 	FetchSecrets(req client.FetchSecretRequest) ([]byte, error)
 	UploadSecrets(req client.EncryptedConfig) error
 	GetOrgPublicKeys(env string) (client.OrgPublicKeys, error)
+	GetSecretList(cfg client.SecretListConfig) ([]client.SecretObject, error)
 }
 
 type EncryptConfig struct {
@@ -126,6 +128,59 @@ func (sm SecretManager) Decrypt(cfg DecryptConfig) error {
 	}
 	if _, err := cfg.Output().Write(result); err != nil {
 		return err
+	}
+	return nil
+}
+
+type ListSecretConfig struct {
+	Environment string
+	Out         io.Writer
+}
+
+func (c ListSecretConfig) output() io.Writer {
+	if c.Out == nil {
+		return os.Stdout
+	}
+	return c.Out
+}
+
+func (c ListSecretConfig) Valid() error {
+	env := strings.ToLower(c.Environment)
+	if env != "production" && env != "staging" {
+		return ErrInvalidEnvironment
+	}
+	return nil
+}
+
+func (sm SecretManager) ListSecret(cfg ListSecretConfig) error {
+	if err := cfg.Valid(); err != nil {
+		return fmt.Errorf("invalid config: %w", err)
+	}
+	req := client.SecretListConfig{Environment: cfg.Environment}
+	resp, err := sm.client.GetSecretList(req)
+	if err != nil {
+		return fmt.Errorf("failed to get secrets: %w", err)
+	}
+
+	lineFormat := "%-10s %-65s %-30s %-30s\n"
+	header := []byte(fmt.Sprintf(lineFormat, "Name", "Location", "Created At (UTC)", "Updated At (UTC)"))
+	if _, err := cfg.output().Write(header); err != nil {
+		return err
+	}
+	for _, obj := range resp {
+		if !strings.HasSuffix(obj.Name, ".key") && !strings.HasSuffix(obj.Name, "/") {
+			arr := strings.SplitN(obj.Name, "/", 2)
+			name := obj.Name
+			if len(arr) == 2 {
+				name = arr[1]
+			}
+			createdAt := obj.CreatedAt.Format(time.DateTime)
+			updatedAt := obj.UpdatedAt.Format(time.DateTime)
+			line := []byte(fmt.Sprintf(lineFormat, name, obj.Location, createdAt, updatedAt))
+			if _, err := cfg.output().Write(line); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

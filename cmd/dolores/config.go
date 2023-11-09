@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -30,6 +31,7 @@ func NewConfig(client GetClient) *ConfigCommand {
 	cfg.Subcommands = append(cfg.Subcommands, EncryptCommand(cfg.encryptAction))
 	cfg.Subcommands = append(cfg.Subcommands, DecryptCommand(cfg.decryptAction))
 	cfg.Subcommands = append(cfg.Subcommands, EditCommand(cfg.editAction))
+	cfg.Subcommands = append(cfg.Subcommands, ListSecretCommand(cfg.listSecretAction))
 	return cfg
 }
 
@@ -72,6 +74,17 @@ func (c *ConfigCommand) decryptAction(ctx *cli.Context) error {
 	log.Trace().Str("cmd", "config.decrypt").Msgf("running decryption")
 	sec := secrets.NewSecretsManager(log, c.rcli(ctx.Context))
 	return sec.Decrypt(req)
+}
+
+func (c *ConfigCommand) listSecretAction(ctx *cli.Context) error {
+	env := ctx.String("environment")
+	log := c.log.With().Str("cmd", "config.list").Str("environment", env).Logger()
+	secMan := secrets.NewSecretsManager(log, c.rcli(ctx.Context))
+	req := secrets.ListSecretConfig{Environment: env, Out: os.Stdout}
+	if err := secMan.ListSecret(req); err != nil {
+		return err
+	}
+	return nil
 }
 
 func EncryptCommand(action cli.ActionFunc) *cli.Command {
@@ -131,6 +144,14 @@ func EditCommand(action cli.ActionFunc) *cli.Command {
 				Name: "key-file",
 			},
 		},
+		Action: action,
+	}
+}
+
+func ListSecretCommand(action cli.ActionFunc) *cli.Command {
+	return &cli.Command{
+		Name:   "list",
+		Usage:  "shows the list of secrets uploaded in cloud",
 		Action: action,
 	}
 }

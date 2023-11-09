@@ -2,6 +2,8 @@ package client
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -21,6 +23,13 @@ type EncryptedConfig struct {
 	Environment string `json:"environment"`
 	Name        string `json:"name"`
 	Data        string `json:"data"`
+}
+
+type SecretObject struct {
+	Name      string    `json:"name"`
+	Location  string    `json:"location"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (c *Client) Init(ctx context.Context, bucket string, cfg Configuration) error {
@@ -75,6 +84,26 @@ func (c *Client) GetOrgPublicKeys(env string) (OrgPublicKeys, error) {
 		recps[i].PublicKey = k
 	}
 	return OrgPublicKeys{Recipients: recps}, nil
+}
+
+type SecretListConfig struct {
+	Environment string `json:"environment"`
+}
+type SecretListResponse struct {
+	Secrets []SecretObject `json:"secrets"`
+}
+
+func (c *Client) GetSecretList(_ SecretListConfig) ([]SecretObject, error) {
+	resp, err := c.Service.ListObject(c.ctx, c.bucket, c.prefix)
+	if err != nil {
+		return nil, err
+	}
+	objs := make([]SecretObject, 0)
+	for _, obj := range resp {
+		o := SecretObject{Name: obj.Name, CreatedAt: obj.Created, UpdatedAt: obj.Updated, Location: fmt.Sprintf("%s/%s", obj.Bucket, obj.Name)}
+		objs = append(objs, o)
+	}
+	return objs, nil
 }
 
 func New(ctx context.Context, cfg config.Client) (*Client, error) {

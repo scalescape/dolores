@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/rs/zerolog/log"
@@ -23,6 +24,13 @@ type StorageClient struct {
 
 type Config struct {
 	ServiceAccountFile string
+}
+
+type Object struct {
+	Name    string    `json:"name"`
+	Bucket  string    `json:"bucket"`
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 }
 
 type ServiceAccount struct {
@@ -105,12 +113,12 @@ func (s StorageClient) ListBuckets(ctx context.Context) ([]string, error) {
 	return buckets, nil
 }
 
-func (s StorageClient) ListOjbect(ctx context.Context, bucketName, path string) ([]string, error) {
+func (s StorageClient) ListObject(ctx context.Context, bucketName, path string) ([]Object, error) {
 	bucket := s.Client.Bucket(bucketName)
 	if _, err := bucket.Attrs(ctx); err != nil {
 		return nil, fmt.Errorf("failed to get bucket: %w", err)
 	}
-	objs := make([]string, 0)
+	objs := make([]Object, 0)
 	iter := bucket.Objects(ctx, &storage.Query{Prefix: path})
 	for {
 		attrs, err := iter.Next()
@@ -120,7 +128,8 @@ func (s StorageClient) ListOjbect(ctx context.Context, bucketName, path string) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to iterate object list: %w", err)
 		}
-		objs = append(objs, attrs.Name)
+		o := Object{Name: attrs.Name, Created: attrs.Created, Updated: attrs.Updated, Bucket: attrs.Bucket}
+		objs = append(objs, o)
 	}
 	log.Trace().Msgf("list of objects from path: %s %+v", path, objs)
 	return objs, nil
