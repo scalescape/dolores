@@ -78,7 +78,7 @@ func (s Service) GetOrgPublicKeys(ctx context.Context, env, bucketName, path str
 	if pubKey != "" {
 		return []string{pubKey}, nil
 	}
-	resp, err := s.GetObjList(ctx, bucketName, path)
+	resp, err := s.ListObject(ctx, bucketName, path)
 	if err != nil {
 		return nil, fmt.Errorf("error listing objects: %w", err)
 	}
@@ -138,7 +138,7 @@ func (s Service) saveObject(ctx context.Context, bucket, fname string, md any) e
 	return s.store.WriteToObject(ctx, bucket, fname, data)
 }
 
-func (s Service) GetObjList(ctx context.Context, bucket, path string) ([]google.Object, error) {
+func (s Service) ListObject(ctx context.Context, bucket, path string) ([]google.Object, error) {
 	resp, err := s.store.ListObject(ctx, bucket, path)
 	if err != nil {
 		return nil, err

@@ -94,7 +94,7 @@ type SecretListResponse struct {
 }
 
 func (c *Client) GetSecretList(_ SecretListConfig) ([]SecretObject, error) {
-	resp, err := c.Service.GetObjList(c.ctx, c.bucket, c.prefix)
+	resp, err := c.Service.ListObject(c.ctx, c.bucket, c.prefix)
 	if err != nil {
 		return nil, err
 	}

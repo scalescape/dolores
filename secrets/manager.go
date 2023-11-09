@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/scalescape/dolores"
@@ -160,7 +161,10 @@ func (sm SecretManager) ListSecret(cfg ListSecretConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to get secrets: %w", err)
 	}
-	if _, err := cfg.output().Write([]byte(fmt.Sprintf("%-10s %-50s %-30s %-30s\n", "Name", "Location", "Created At UTC", "Updated At UTC"))); err != nil {
+
+	lineFormat := "%-10s %-65s %-30s %-30s\n"
+	header := []byte(fmt.Sprintf(lineFormat, "Name", "Location", "Created At (UTC)", "Updated At (UTC)"))
+	if _, err := cfg.output().Write(header); err != nil {
 		return err
 	}
 	for _, obj := range resp {
@@ -170,9 +174,10 @@ func (sm SecretManager) ListSecret(cfg ListSecretConfig) error {
 			if len(arr) == 2 {
 				name = arr[1]
 			}
-			createdAt := obj.CreatedAt.Format("2000-01-02 15:04:05.999")
-			updatedAt := obj.UpdatedAt.Format("2000-01-02 15:04:05.999")
-			if _, err := cfg.output().Write([]byte(fmt.Sprintf("%-10s %-50s %-30s %-30s\n", name, obj.Location, createdAt, updatedAt))); err != nil {
+			createdAt := obj.CreatedAt.Format(time.DateTime)
+			updatedAt := obj.UpdatedAt.Format(time.DateTime)
+			line := []byte(fmt.Sprintf(lineFormat, name, obj.Location, createdAt, updatedAt))
+			if _, err := cfg.output().Write(line); err != nil {
 				return err
 			}
 		}
