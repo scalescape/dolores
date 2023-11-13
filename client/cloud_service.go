@@ -10,7 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/config"
-	"github.com/scalescape/dolores/store/google"
+	cloud "github.com/scalescape/dolores/store/cld"
 )
 
 var ErrInvalidPublicKeys = errors.New("invalid public keys")
@@ -18,13 +18,13 @@ var ErrInvalidPublicKeys = errors.New("invalid public keys")
 const metadataFile = "dolores.md"
 
 type Service struct {
-	store gcsStore
+	store storeI
 }
 
-type gcsStore interface {
+type storeI interface {
 	WriteToObject(ctx context.Context, bucketName, fileName string, data []byte) error
 	ReadObject(ctx context.Context, bucketName, fileName string) ([]byte, error)
-	ListObject(ctx context.Context, bucketName, path string) ([]google.Object, error)
+	ListObject(ctx context.Context, bucketName, path string) ([]cloud.Object, error)
 	ExistsObject(ctx context.Context, bucketName, fileName string) (bool, error)
 }
 
@@ -138,7 +138,7 @@ func (s Service) saveObject(ctx context.Context, bucket, fname string, md any) e
 	return s.store.WriteToObject(ctx, bucket, fname, data)
 }
 
-func (s Service) ListObject(ctx context.Context, bucket, path string) ([]google.Object, error) {
+func (s Service) ListObject(ctx context.Context, bucket, path string) ([]cloud.Object, error) {
 	resp, err := s.store.ListObject(ctx, bucket, path)
 	if err != nil {
 		return nil, err
@@ -146,6 +146,6 @@ func (s Service) ListObject(ctx context.Context, bucket, path string) ([]google.
 	return resp, nil
 }
 
-func NewService(st gcsStore) Service {
+func NewService(st storeI) Service {
 	return Service{store: st}
 }

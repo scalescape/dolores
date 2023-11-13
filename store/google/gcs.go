@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/rs/zerolog/log"
+	cloud "github.com/scalescape/dolores/store/cld"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -24,13 +24,6 @@ type StorageClient struct {
 
 type Config struct {
 	ServiceAccountFile string
-}
-
-type Object struct {
-	Name    string    `json:"name"`
-	Bucket  string    `json:"bucket"`
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
 }
 
 type ServiceAccount struct {
@@ -113,12 +106,12 @@ func (s StorageClient) ListBuckets(ctx context.Context) ([]string, error) {
 	return buckets, nil
 }
 
-func (s StorageClient) ListObject(ctx context.Context, bucketName, path string) ([]Object, error) {
+func (s StorageClient) ListObject(ctx context.Context, bucketName, path string) ([]cloud.Object, error) {
 	bucket := s.Client.Bucket(bucketName)
 	if _, err := bucket.Attrs(ctx); err != nil {
 		return nil, fmt.Errorf("failed to get bucket: %w", err)
 	}
-	objs := make([]Object, 0)
+	objs := make([]cloud.Object, 0)
 	iter := bucket.Objects(ctx, &storage.Query{Prefix: path})
 	for {
 		attrs, err := iter.Next()
@@ -128,7 +121,7 @@ func (s StorageClient) ListObject(ctx context.Context, bucketName, path string) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to iterate object list: %w", err)
 		}
-		o := Object{Name: attrs.Name, Created: attrs.Created, Updated: attrs.Updated, Bucket: attrs.Bucket}
+		o := cloud.Object{Name: attrs.Name, Created: attrs.Created, Updated: attrs.Updated, Bucket: attrs.Bucket}
 		objs = append(objs, o)
 	}
 	log.Trace().Msgf("list of objects from path: %s %+v", path, objs)

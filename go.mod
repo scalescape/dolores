@@ -6,6 +6,9 @@ require (
 	cloud.google.com/go/storage v1.30.1
 	filippo.io/age v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
+	github.com/aws/aws-sdk-go-v2/config v1.23.0
+	github.com/aws/aws-sdk-go-v2/credentials v1.15.2
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.42.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/zerolog v1.29.1
 	github.com/scalescape/go-metrics v0.0.0-20230825040750-1888415fe69a
@@ -19,6 +22,22 @@ require (
 	cloud.google.com/go/compute v1.19.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
+	github.com/aws/aws-sdk-go v1.47.9
+	github.com/aws/aws-sdk-go-v2 v1.22.2 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.0 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.6.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.2.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.2.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.16.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.17.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.19.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.25.1 // indirect
+	github.com/aws/smithy-go v1.16.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cactus/go-statsd-client/v5 v5.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -45,12 +64,12 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.10.0 // indirect
-	golang.org/x/net v0.11.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.9.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/term v0.9.0 // indirect
-	golang.org/x/text v0.10.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc // indirect

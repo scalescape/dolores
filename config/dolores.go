@@ -12,8 +12,9 @@ import (
 var ErrInvalidDoloresConfig = errors.New("invalid dolores config")
 
 type Environment struct {
-	Metadata `json:"metadata"`
-	KeyFile  string `json:"key_file"`
+	Metadata      `json:"metadata"`
+	KeyFile       string `json:"key_file"`
+	CloudProvider string `json:"cloud_provider"`
 }
 
 type Dolores struct {
@@ -25,8 +26,9 @@ func (d *Dolores) AddEnvironment(env string, keyFile string, md Metadata) {
 		d.Environments = make(map[string]Environment)
 	}
 	d.Environments[env] = Environment{
-		Metadata: md,
-		KeyFile:  keyFile,
+		Metadata:      md,
+		KeyFile:       keyFile,
+		CloudProvider: AWS, // Temp adding for testing
 	}
 }
 
