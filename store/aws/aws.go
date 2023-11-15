@@ -127,6 +127,19 @@ func (s StorageClient) ReadObject(ctx context.Context, bucketName, fileName stri
 }
 
 func (s StorageClient) ExistsObject(ctx context.Context, bucketName, fileName string) (bool, error) {
+	_, err := s.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(fileName),
+	})
+	if err != nil {
+		var notFoundType *types.NoSuchKey
+		if errors.As(err, &notFoundType) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
 	return true, nil
 }
 
