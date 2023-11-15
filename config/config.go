@@ -40,6 +40,7 @@ type Cloud struct {
 }
 
 type Metadata struct {
+	CloudProvider          string    `json:"cloud_provider"`
 	Bucket                 string    `json:"bucket"`
 	Location               string    `json:"location"`
 	Environment            string    `json:"environment"`
@@ -57,6 +58,9 @@ func (c Client) BucketName() string {
 }
 
 func (c Client) Valid() error {
+	if c.Provider == "" {
+		return ErrCloudProviderNotFound
+	}
 	if c.Cloud.ApplicationCredentials == "" {
 		return ErrInvalidGoogleCreds
 	}
@@ -77,7 +81,10 @@ func LoadClient(ctx context.Context, env string) (Client, error) {
 	}
 
 	md := d.Environments[env].Metadata
-	cfg.Provider = d.Environments[env].CloudProvider
+	if cloudProvider := md.CloudProvider; cloudProvider != "" {
+		cfg.Provider = cloudProvider
+	}
+
 	if cfg.Cloud.ApplicationCredentials == "" {
 		if creds := md.ApplicationCredentials; creds != "" {
 			cfg.Cloud.ApplicationCredentials = creds
