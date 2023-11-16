@@ -87,25 +87,8 @@ func (c *InitCommand) getCred(res *Input) error {
 		}
 	case config.AWS:
 		{
-			credFile := os.Getenv("AWS_APPLICATION_CREDENTIALS")
-			if credFile != "" {
-				qs = append(qs, &survey.Question{
-					Name:     "creds",
-					Validate: survey.Required,
-					Prompt: &survey.Select{
-						Message: "Use AWS_APPLICATION_CREDENTIALS env as credentials file",
-						Options: []string{credFile},
-					},
-				})
-			} else {
-				qs = append(qs, &survey.Question{
-					Name: "creds",
-					Prompt: &survey.Input{
-						Message: "Enter aws service account file path",
-					},
-					Validate: survey.Required,
-				})
-			}
+			res.ApplicationCredentials = "aws_default"
+			return nil
 		}
 	}
 

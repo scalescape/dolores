@@ -7,7 +7,7 @@ import (
 
 	"github.com/scalescape/dolores/client"
 	"github.com/scalescape/dolores/config"
-	cloud "github.com/scalescape/dolores/store/cld"
+	"github.com/scalescape/dolores/store/cloud"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -69,7 +69,8 @@ func (s *serviceSuite) TestShouldNotOverwriteMetadata() {
 	cfg := client.Configuration{
 		PublicKey: "public_key",
 		Metadata:  config.Metadata{Location: "secrets"},
-		UserID:    "test_user"}
+		UserID:    "test_user",
+	}
 	s.gcs.On("ExistsObject", mock.AnythingOfType("context.backgroundCtx"), s.bucket, name).Return(true, nil).Once()
 	s.gcs.On("WriteToObject", mock.AnythingOfType("context.backgroundCtx"), s.bucket, "secrets/keys/test_user.key", []byte(cfg.PublicKey)).Return(nil).Once()
 

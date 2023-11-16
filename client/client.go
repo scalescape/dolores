@@ -107,14 +107,13 @@ func (c *Client) GetSecretList(_ SecretListConfig) ([]SecretObject, error) {
 	return objs, nil
 }
 
-func getStore(ctx context.Context, cfg config.Client) (storeI, error) {
-	var store storeI
+func getStore(ctx context.Context, cfg config.Client) (clouldStore, error) {
+	var store clouldStore
 	var err error
 	switch cfg.Provider {
 	case config.AWS:
 		{
-			acfg := aws.Config{ServiceAccountFile: cfg.Cloud.ApplicationCredentials}
-			store, err = aws.NewStore(ctx, acfg)
+			store, err = aws.NewStore(ctx)
 			if err != nil {
 				return nil, err
 			}

@@ -7,7 +7,6 @@ require (
 	filippo.io/age v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/aws/aws-sdk-go-v2/config v1.23.0
-	github.com/aws/aws-sdk-go-v2/credentials v1.15.2
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.42.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/zerolog v1.29.1
@@ -17,13 +16,14 @@ require (
 	google.golang.org/api v0.129.0
 )
 
+require github.com/aws/aws-sdk-go-v2/credentials v1.15.2 // indirect
+
 require (
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute v1.19.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
-	github.com/aws/aws-sdk-go v1.47.9
-	github.com/aws/aws-sdk-go-v2 v1.22.2 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.22.2
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.0 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.2 // indirect
