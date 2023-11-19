@@ -107,6 +107,8 @@ func (c *InitCommand) getCred(res *Input) error {
 					Validate: survey.Required,
 				})
 			}
+			res.ApplicationCredentials = "aws_default"
+			return nil
 		}
 	}
 

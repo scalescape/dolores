@@ -10,7 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/config"
-	cloud "github.com/scalescape/dolores/store/cld"
+	"github.com/scalescape/dolores/store/cloud"
 )
 
 var ErrInvalidPublicKeys = errors.New("invalid public keys")
@@ -18,10 +18,10 @@ var ErrInvalidPublicKeys = errors.New("invalid public keys")
 const metadataFile = "dolores.md"
 
 type Service struct {
-	store storeI
+	store cloudStore
 }
 
-type storeI interface {
+type cloudStore interface {
 	WriteToObject(ctx context.Context, bucketName, fileName string, data []byte) error
 	ReadObject(ctx context.Context, bucketName, fileName string) ([]byte, error)
 	ListObject(ctx context.Context, bucketName, path string) ([]cloud.Object, error)
@@ -147,6 +147,6 @@ func (s Service) ListObject(ctx context.Context, bucket, path string) ([]cloud.O
 	return resp, nil
 }
 
-func NewService(st storeI) Service {
+func NewService(st clouldStore) Service {
 	return Service{store: st}
 }

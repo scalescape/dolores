@@ -7,29 +7,23 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/rs/zerolog/log"
-	cloud "github.com/scalescape/dolores/store/cld"
+	"github.com/scalescape/dolores/store/cloud"
 )
 
 var ErrInvalidServiceAccount = errors.New("invalid service account")
 
+type Config struct {
+	Credentials string
+}
+
 type StorageClient struct {
 	client *s3.Client
 	region string
-}
-
-type Config struct {
-	ServiceAccountFile string
-}
-
-type ServiceAccount struct {
-	AccessKeyID     string `json:"accessKey"`
-	SecretAccessKey string `json:"secretKey"`
-	Region          string `json:"region"`
 }
 
 func (s StorageClient) bucketExists(ctx context.Context, bucketName string) (bool, error) {
@@ -48,8 +42,10 @@ func (s StorageClient) bucketExists(ctx context.Context, bucketName string) (boo
 func (s StorageClient) CreateBucket(ctx context.Context, bucketName string) error {
 	lconst := types.BucketLocationConstraint(s.region)
 	cbCfg := &types.CreateBucketConfiguration{LocationConstraint: lconst}
-	bucket := &s3.CreateBucketInput{Bucket: aws.String(bucketName),
-		CreateBucketConfiguration: cbCfg}
+	bucket := &s3.CreateBucketInput{
+		Bucket:                    aws.String(bucketName),
+		CreateBucketConfiguration: cbCfg,
+	}
 	_, err := s.client.CreateBucket(ctx, bucket)
 	var existsErr *types.BucketAlreadyOwnedByYou = new(types.BucketAlreadyOwnedByYou)
 	if errors.As(err, &existsErr) {
@@ -111,7 +107,6 @@ func (s StorageClient) ReadObject(ctx context.Context, bucketName, fileName stri
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(fileName),
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to read object : %w", err)
 	}
@@ -132,20 +127,20 @@ func (s StorageClient) ExistsObject(ctx context.Context, bucketName, fileName st
 		var notFoundType *types.NoSuchKey
 		if errors.As(err, &notFoundType) {
 			return false, nil
-		} else {
-			return false, err
 		}
+		return false, err
 	}
 
 	return true, nil
 }
 
 func NewStore(ctx context.Context, acfg Config) (StorageClient, error) {
-	cp := config.WithSharedCredentialsFiles([]string{acfg.ServiceAccountFile})
+	cp := config.WithSharedCredentialsFiles([]string{acfg.Credentials})
 	cfg, err := config.LoadDefaultConfig(ctx, cp)
 	if err != nil {
 		return StorageClient{}, err
 	}
+
 	cli := s3.NewFromConfig(cfg)
 	return StorageClient{client: cli, region: cfg.Region}, nil
 }

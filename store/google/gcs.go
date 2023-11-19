@@ -10,7 +10,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/rs/zerolog/log"
-	cloud "github.com/scalescape/dolores/store/cld"
+	"github.com/scalescape/dolores/store/cloud"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
