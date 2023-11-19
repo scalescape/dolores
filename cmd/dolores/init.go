@@ -12,6 +12,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/scalescape/dolores"
 	"github.com/scalescape/dolores/client"
 	"github.com/scalescape/dolores/config"
 	"github.com/urfave/cli/v2"
@@ -87,13 +88,13 @@ func (c *InitCommand) getCred(res *Input) error {
 		}
 	case config.AWS:
 		{
-			credFile := os.Getenv("AWS_APPLICATION_CREDENTIALS")
+			credFile := os.Getenv("AWS_SHARED_CREDENTIALS_FILE")
 			if credFile != "" {
 				qs = append(qs, &survey.Question{
 					Name:     "creds",
 					Validate: survey.Required,
 					Prompt: &survey.Select{
-						Message: "Use AWS_APPLICATION_CREDENTIALS env as credentials file",
+						Message: "Use AWS_SHARED_CREDENTIALS_FILE env as credentials file",
 						Options: []string{credFile},
 					},
 				})
@@ -207,6 +208,10 @@ func (c *InitCommand) initialize(cctx *cli.Context) error {
 			return err
 		}
 	} else {
+		publicKey, err = dolores.ReadPublicKey(keyFilePath)
+		if err != nil {
+			return fmt.Errorf("error reading public key: %s %w", keyFilePath, err)
+		}
 		log.Info().Msgf("asymmetric key already exists at %s", keyFilePath)
 	}
 	d := &config.Dolores{}

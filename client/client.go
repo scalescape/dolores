@@ -116,7 +116,7 @@ func getStore(ctx context.Context, cfg config.Client) (storeI, error) {
 			acfg := aws.Config{ServiceAccountFile: cfg.Cloud.ApplicationCredentials}
 			store, err = aws.NewStore(ctx, acfg)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("(aws) %w", err)
 			}
 		}
 	case config.GCS:
@@ -124,11 +124,11 @@ func getStore(ctx context.Context, cfg config.Client) (storeI, error) {
 			gcfg := google.Config{ServiceAccountFile: cfg.Cloud.ApplicationCredentials}
 			store, err = google.NewStore(ctx, gcfg)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("(gcp) %w", err)
 			}
 		}
 	default:
-		err = fmt.Errorf("failed to get store: %w", config.ErrCloudProviderNotFound)
+		err = fmt.Errorf("failed to get store for %s: %w", cfg.Provider, config.ErrCloudProviderNotFound)
 	}
 
 	return store, err
@@ -147,7 +147,7 @@ func New(ctx context.Context, cfg config.Client) (*Client, error) {
 		Service: Service{store: st},
 		bucket:  cfg.BucketName(),
 		prefix:  cfg.StoragePrefix,
-		log:     log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Logger(),
+		log:     log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Str("provider", cfg.Provider).Logger(),
 	}
 	return cli, nil
 }

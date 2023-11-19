@@ -41,6 +41,7 @@ func (s Service) Init(ctx context.Context, bucket string, cfg Configuration) err
 		if err := s.uploadPubKey(ctx, bucket, pubKey, cfg.PublicKey); err != nil {
 			return fmt.Errorf("error writing public key: %w", err)
 		}
+		log.Info().Msgf("uploaded public key successfully.")
 	}
 	exists, err := s.store.ExistsObject(ctx, bucket, metadataFile)
 	if err != nil {

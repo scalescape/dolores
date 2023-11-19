@@ -7,7 +7,6 @@ require (
 	filippo.io/age v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/aws/aws-sdk-go-v2/config v1.23.0
-	github.com/aws/aws-sdk-go-v2/credentials v1.15.2
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.42.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/zerolog v1.29.1
@@ -16,6 +15,8 @@ require (
 	github.com/urfave/cli/v2 v2.25.7
 	google.golang.org/api v0.129.0
 )
+
+require github.com/aws/aws-sdk-go-v2/credentials v1.15.2 // indirect
 
 require (
 	cloud.google.com/go v0.110.0 // indirect

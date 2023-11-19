@@ -3,14 +3,11 @@ package aws
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go/aws"
@@ -71,7 +68,7 @@ func (s StorageClient) ListObject(ctx context.Context, bucket, path string) ([]c
 		Prefix: aws.String(path),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get object list: %w", err)
+		return nil, fmt.Errorf("failed to get object list for %s: %w", bucket, err)
 	}
 
 	items := resp.Contents
@@ -144,19 +141,11 @@ func (s StorageClient) ExistsObject(ctx context.Context, bucketName, fileName st
 }
 
 func NewStore(ctx context.Context, acfg Config) (StorageClient, error) {
-	data, err := os.ReadFile(acfg.ServiceAccountFile)
-	if err != nil {
-		return StorageClient{}, fmt.Errorf("failed to read service account file with error %v %w", err, ErrInvalidServiceAccount)
-	}
-	sa := new(ServiceAccount)
-	if err := json.Unmarshal(data, sa); err != nil {
-		return StorageClient{}, fmt.Errorf("unable to parse service account file: %w", err)
-	}
-	cp := credentials.NewStaticCredentialsProvider(sa.AccessKeyID, sa.SecretAccessKey, "")
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(sa.Region), config.WithCredentialsProvider(cp))
+	cp := config.WithSharedCredentialsFiles([]string{acfg.ServiceAccountFile})
+	cfg, err := config.LoadDefaultConfig(ctx, cp)
 	if err != nil {
 		return StorageClient{}, err
 	}
 	cli := s3.NewFromConfig(cfg)
-	return StorageClient{client: cli, region: sa.Region}, nil
+	return StorageClient{client: cli, region: cfg.Region}, nil
 }
