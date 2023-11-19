@@ -110,7 +110,7 @@ func (c DecryptConfig) Valid() error {
 
 func (sm SecretManager) Decrypt(cfg DecryptConfig) error {
 	if err := cfg.Valid(); err != nil {
-		return fmt.Errorf("invalid config: %w: %v", ErrInvalidDecryptConfig, err)
+		return fmt.Errorf("invalid config: %w: %w", ErrInvalidDecryptConfig, err)
 	}
 	req := client.FetchSecretRequest{Name: cfg.Name, Environment: cfg.Environment}
 	data, err := sm.client.FetchSecrets(req)

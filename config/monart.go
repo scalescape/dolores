@@ -33,7 +33,7 @@ func LoadMonartClient() (*Monart, error) {
 		ID:       os.Getenv("MONART_ID"),
 	}
 	if err := mon.Valid(); err != nil {
-		return nil, fmt.Errorf("Invalid monart config: %v %w", ErrInvalidMonartConfig, err)
+		return nil, fmt.Errorf("failed to validate config: %w %w", ErrInvalidMonartConfig, err)
 	}
 	return mon, nil
 }

@@ -93,7 +93,7 @@ func (c *Runner) runScript(ctx context.Context, cmdName string, args []string) e
 	c.wg.Wait()
 
 	if err := cmd.Wait(); err != nil {
-		if err, ok := err.(*exec.ExitError); ok { // nolint:errorlint
+		if err, ok := err.(*exec.ExitError); ok { //nolint:errorlint
 			if status, ok := err.Sys().(syscall.WaitStatus); ok {
 				// TODO: Report this error exit status
 				c.exitStatus = status.ExitStatus()

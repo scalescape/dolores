@@ -147,6 +147,6 @@ func (s Service) ListObject(ctx context.Context, bucket, path string) ([]cloud.O
 	return resp, nil
 }
 
-func NewService(st clouldStore) Service {
+func NewService(st cloudStore) Service {
 	return Service{store: st}
 }

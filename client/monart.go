@@ -19,12 +19,12 @@ type credentials struct {
 }
 
 type MonartClient struct {
-	ctx  context.Context
+	ctx  context.Context //nolint:containedctx
 	cred credentials
 	cli  *http.Client
 }
 
-var ErrMethodUndefined = errors.New("Method not yet implemented")
+var ErrMethodUndefined = errors.New("method not yet implemented")
 
 func (s MonartClient) Init(ctx context.Context, bucket string, cfg Configuration) error {
 	return ErrMethodUndefined
