@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/scalescape/dolores/config"
+	"github.com/scalescape/dolores/store/aws"
 	"github.com/scalescape/dolores/store/google"
 )
 
@@ -106,12 +107,37 @@ func (c *Client) GetSecretList(_ SecretListConfig) ([]SecretObject, error) {
 	return objs, nil
 }
 
+func getStore(ctx context.Context, cfg config.Client) (clouldStore, error) {
+	var store clouldStore
+	var err error
+	switch cfg.Provider {
+	case config.AWS:
+		{
+			store, err = aws.NewStore(ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
+	case config.GCS:
+		{
+			gcfg := google.Config{ServiceAccountFile: cfg.Cloud.ApplicationCredentials}
+			store, err = google.NewStore(ctx, gcfg)
+			if err != nil {
+				return nil, err
+			}
+		}
+	default:
+		err = fmt.Errorf("failed to get store: %w", config.ErrCloudProviderNotFound)
+	}
+
+	return store, err
+}
+
 func New(ctx context.Context, cfg config.Client) (*Client, error) {
 	if err := cfg.Valid(); err != nil {
 		return nil, err
 	}
-	gcfg := google.Config{ServiceAccountFile: cfg.Google.ApplicationCredentials}
-	st, err := google.NewStore(ctx, gcfg)
+	st, err := getStore(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}

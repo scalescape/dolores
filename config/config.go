@@ -12,9 +12,15 @@ import (
 )
 
 var (
-	ErrInvalidGoogleCreds   = errors.New("invalid google application credentials")
-	ErrInvalidStorageBucket = errors.New("invalid storage bucket")
-	ErrInvalidKeyFile       = errors.New("invalid key file")
+	ErrInvalidGoogleCreds    = errors.New("invalid google application credentials")
+	ErrInvalidStorageBucket  = errors.New("invalid storage bucket")
+	ErrInvalidKeyFile        = errors.New("invalid key file")
+	ErrCloudProviderNotFound = errors.New("cloud provider not found")
+)
+
+var (
+	AWS = "AWS"
+	GCS = "GCS"
 )
 
 type CtxKey string
@@ -27,13 +33,14 @@ var (
 	File     = filepath.Join(Dir, "dolores.json")
 )
 
-type Google struct {
+type Cloud struct {
 	ApplicationCredentials string `split_words:"true"`
 	StorageBucket          string `split_words:"true"`
 	StoragePrefix          string
 }
 
 type Metadata struct {
+	CloudProvider          string    `json:"cloud_provider"`
 	Bucket                 string    `json:"bucket"`
 	Location               string    `json:"location"`
 	Environment            string    `json:"environment"`
@@ -42,18 +49,22 @@ type Metadata struct {
 }
 
 type Client struct {
-	Google
+	Cloud
+	Provider string
 }
 
 func (c Client) BucketName() string {
-	return c.Google.StorageBucket
+	return c.Cloud.StorageBucket
 }
 
 func (c Client) Valid() error {
-	if c.Google.ApplicationCredentials == "" {
+	if c.Provider == "" {
+		return ErrCloudProviderNotFound
+	}
+	if c.Cloud.ApplicationCredentials == "" {
 		return ErrInvalidGoogleCreds
 	}
-	if c.Google.StorageBucket == "" {
+	if c.Cloud.StorageBucket == "" {
 		return ErrInvalidStorageBucket
 	}
 	return nil
@@ -65,23 +76,27 @@ func LoadClient(ctx context.Context, env string) (Client, error) {
 	if err != nil {
 		return Client{}, fmt.Errorf("dolores not initialized yet: %w", err)
 	}
-	if err := envconfig.Process("GOOGLE", &cfg.Google); err != nil {
+	if err := envconfig.Process("GOOGLE", &cfg.Cloud); err != nil {
 		return Client{}, fmt.Errorf("processing config: %w", err)
 	}
 
 	md := d.Environments[env].Metadata
-	if cfg.Google.ApplicationCredentials == "" {
+	if cloudProvider := md.CloudProvider; cloudProvider != "" {
+		cfg.Provider = cloudProvider
+	}
+
+	if cfg.Cloud.ApplicationCredentials == "" {
 		if creds := md.ApplicationCredentials; creds != "" {
-			cfg.Google.ApplicationCredentials = creds
+			cfg.Cloud.ApplicationCredentials = creds
 		}
 	}
 
 	if bucket := md.Bucket; bucket != "" {
-		cfg.Google.StorageBucket = bucket
+		cfg.Cloud.StorageBucket = bucket
 	}
 
 	if location := md.Location; location != "" {
-		cfg.Google.StoragePrefix = location
+		cfg.Cloud.StoragePrefix = location
 	}
 
 	if err := cfg.Valid(); err != nil {

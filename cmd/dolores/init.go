@@ -41,14 +41,16 @@ func NewInitCommand(newCli GetClient) *cli.Command {
 }
 
 type Input struct {
+	CloudProvider          string `survey:"cloud_provider"`
 	UserID                 string `survey:"user_id"`
 	Bucket                 string
 	Location               string
-	ApplicationCredentials string `survey:"google_creds"`
+	ApplicationCredentials string `survey:"creds"`
 }
 
 func (inp Input) ToMetadata(env string) config.Metadata {
 	return config.Metadata{
+		CloudProvider:          inp.CloudProvider,
 		Bucket:                 inp.Bucket,
 		Location:               inp.Location,
 		CreatedAt:              time.Now(),
@@ -57,13 +59,61 @@ func (inp Input) ToMetadata(env string) config.Metadata {
 	}
 }
 
+func (c *InitCommand) getCred(res *Input) error {
+	qs := []*survey.Question{}
+
+	switch res.CloudProvider {
+	case config.GCS:
+		{
+			credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+			if credFile != "" {
+				qs = append(qs, &survey.Question{
+					Name:     "creds",
+					Validate: survey.Required,
+					Prompt: &survey.Select{
+						Message: "Use GOOGLE_APPLICATION_CREDENTIALS env as credentials file",
+						Options: []string{credFile},
+					},
+				})
+			} else {
+				qs = append(qs, &survey.Question{
+					Name: "creds",
+					Prompt: &survey.Input{
+						Message: "Enter google service account file path",
+					},
+					Validate: survey.Required,
+				})
+			}
+		}
+	case config.AWS:
+		{
+			res.ApplicationCredentials = "aws_default"
+			return nil
+		}
+	}
+
+	credRes := new(Input)
+	if err := survey.Ask(qs, credRes); err != nil {
+		return fmt.Errorf("failed to get appropriate input: %w", err)
+	}
+	res.ApplicationCredentials = credRes.ApplicationCredentials
+	return nil
+}
+
 func (c *InitCommand) getData(env string) (*Input, error) {
-	credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	qs := []*survey.Question{
+		{
+			Name:     "cloud_provider",
+			Validate: survey.Required,
+			Prompt: &survey.Select{
+				Message: "Select Cloud provider",
+				Options: []string{config.AWS, config.GCS},
+			},
+		},
 		{
 			Name: "bucket",
 			Prompt: &survey.Input{
-				Message: "Enter the GCS bucket name:",
+				Message: "Enter the bucket name:",
 			},
 			Validate: survey.Required,
 		},
@@ -84,26 +134,11 @@ func (c *InitCommand) getData(env string) (*Input, error) {
 			},
 		},
 	}
-	if credFile != "" {
-		qs = append(qs, &survey.Question{
-			Name:     "google_creds",
-			Validate: survey.Required,
-			Prompt: &survey.Select{
-				Message: "Use GOOGLE_APPLICATION_CREDENTIALS env as credentials file",
-				Options: []string{credFile},
-			},
-		})
-	} else {
-		qs = append(qs, &survey.Question{
-			Name: "google_creds",
-			Prompt: &survey.Input{
-				Message: "Enter google service account file path",
-			},
-			Validate: survey.Required,
-		})
-	}
 	res := new(Input)
 	if err := survey.Ask(qs, res); err != nil {
+		return nil, fmt.Errorf("failed to get appropriate input: %w", err)
+	}
+	if err := c.getCred(res); err != nil {
 		return nil, fmt.Errorf("failed to get appropriate input: %w", err)
 	}
 	return res, nil
