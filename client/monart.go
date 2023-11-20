@@ -110,7 +110,7 @@ func (s MonartClient) call(req *http.Request, dest any) (*http.Response, error) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to call server: %w", err)
 	}
-	if resp.StatusCode != 200 && resp.StatusCode != 201 {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		log.Error().Msgf("server failed with status: %d", resp.StatusCode)
 		return nil, fmt.Errorf("server failed with response: %d %w", resp.StatusCode, err)
 	}

@@ -40,11 +40,11 @@ type SecretManager struct {
 	log    zerolog.Logger
 }
 
+// revive:disable function-length
 func (sm SecretManager) Encrypt(req EncryptConfig) error {
 	env, file, name := req.Environment, req.FileName, req.Name
 	log := sm.log.With().Str("cmd", "config.encrypt").Str("environment",
 		env).Logger()
-	log.Debug().Msgf("running encryption")
 	envFile, err := dolores.LoadEnvFile(file)
 	if err != nil {
 		return fmt.Errorf("failed to load file: %w", err)
@@ -71,10 +71,7 @@ func (sm SecretManager) Encrypt(req EncryptConfig) error {
 		Name:        name,
 		Data:        base64.StdEncoding.EncodeToString(data),
 	}
-	if err := sm.client.UploadSecrets(ureq); err != nil {
-		return err
-	}
-	return nil
+	return sm.client.UploadSecrets(ureq)
 }
 
 type DecryptConfig struct {
@@ -108,6 +105,7 @@ func (c DecryptConfig) Valid() error {
 	return nil
 }
 
+// revive:disable function-length
 func (sm SecretManager) Decrypt(cfg DecryptConfig) error {
 	if err := cfg.Valid(); err != nil {
 		return fmt.Errorf("invalid config: %w: %w", ErrInvalidDecryptConfig, err)
@@ -161,22 +159,16 @@ func (sm SecretManager) ListSecret(cfg ListSecretConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to get secrets: %w", err)
 	}
-
 	lineFormat := "%-10s %-65s %-30s %-30s\n"
 	header := []byte(fmt.Sprintf(lineFormat, "Name", "Location", "Created At (UTC)", "Updated At (UTC)"))
 	if _, err := cfg.output().Write(header); err != nil {
 		return err
 	}
 	for _, obj := range resp {
-		if !strings.HasSuffix(obj.Name, ".key") && !strings.HasSuffix(obj.Name, "/") {
-			arr := strings.SplitN(obj.Name, "/", 2)
-			name := obj.Name
-			if len(arr) == 2 {
-				name = arr[1]
-			}
+		if !strings.HasSuffix(obj.Name, ".key") && !obj.IsDir() {
 			createdAt := obj.CreatedAt.Format(time.DateTime)
 			updatedAt := obj.UpdatedAt.Format(time.DateTime)
-			line := []byte(fmt.Sprintf(lineFormat, name, obj.Location, createdAt, updatedAt))
+			line := []byte(fmt.Sprintf(lineFormat, obj.BaseName(), obj.Location, createdAt, updatedAt))
 			if _, err := cfg.output().Write(line); err != nil {
 				return err
 			}

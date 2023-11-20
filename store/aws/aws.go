@@ -47,7 +47,7 @@ func (s StorageClient) CreateBucket(ctx context.Context, bucketName string) erro
 		CreateBucketConfiguration: cbCfg,
 	}
 	_, err := s.client.CreateBucket(ctx, bucket)
-	var existsErr *types.BucketAlreadyOwnedByYou = new(types.BucketAlreadyOwnedByYou)
+	existsErr := new(types.BucketAlreadyOwnedByYou)
 	if errors.As(err, &existsErr) {
 		log.Debug().Msgf("bucket %s already exists", bucketName)
 		return nil

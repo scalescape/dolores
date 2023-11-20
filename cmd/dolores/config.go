@@ -10,6 +10,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	Name = "name"
+)
+
 type ConfigCommand struct {
 	*cli.Command
 	rcli func(context.Context) secretsClient
@@ -54,7 +58,7 @@ func (c *ConfigCommand) editAction(ctx *cli.Context) error {
 func (c *ConfigCommand) encryptAction(ctx *cli.Context) error {
 	env := ctx.String("environment")
 	file := ctx.String("file")
-	name := ctx.String("name")
+	name := ctx.String(Name)
 	log := c.log.With().Str("cmd", "config.encrypt").Str("environment", env).Logger()
 	secMan := secrets.NewSecretsManager(log, c.rcli(ctx.Context))
 	req := secrets.EncryptConfig{Environment: env, FileName: file, Name: name}
@@ -98,7 +102,7 @@ func EncryptCommand(action cli.ActionFunc) *cli.Command {
 				Required: true,
 			},
 			&cli.StringFlag{
-				Name:     "name",
+				Name:     Name,
 				Required: true,
 			},
 		},
@@ -112,7 +116,7 @@ func DecryptCommand(action cli.ActionFunc) *cli.Command {
 		Usage: "decrypt the remote configuration",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "name",
+				Name:     Name,
 				Required: true,
 			},
 			&cli.StringFlag{
@@ -133,7 +137,7 @@ func EditCommand(action cli.ActionFunc) *cli.Command {
 		Usage: "edit the secrets configuration",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "name",
+				Name:     Name,
 				Required: true,
 			},
 			&cli.StringFlag{

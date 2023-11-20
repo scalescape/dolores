@@ -24,6 +24,7 @@ func ParseIdentities(keyFile string) ([]age.Identity, error) {
 	return ids, nil
 }
 
+// revive:disable function-length
 func ReadPublicKey(fname string) (string, error) {
 	keyFile, err := os.Open(fname)
 	if err != nil {
@@ -43,10 +44,10 @@ func ReadPublicKey(fname string) (string, error) {
 		if len(match) > 1 {
 			r, err := age.ParseX25519Recipient(match[1])
 			if err != nil {
-				return "", fmt.Errorf("malformed recipient at line %d", n)
+				return "", fmt.Errorf("malformed recipient at line %d %w", n, err)
 			}
 			return r.String(), nil
 		}
 	}
-	return "", fmt.Errorf("unable to extract public key")
+	return "", fmt.Errorf("unable to extract public key: %w", ErrInvalidKeyFile)
 }

@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -31,6 +32,19 @@ type SecretObject struct {
 	Location  string    `json:"location"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (o SecretObject) IsDir() bool {
+	return strings.HasSuffix(o.Name, "/")
+}
+
+func (o SecretObject) BaseName() string {
+	arr := strings.SplitN(o.Name, "/", 2)
+	name := o.Name
+	if len(arr) == 2 {
+		name = arr[1]
+	}
+	return name
 }
 
 func (c *Client) Init(ctx context.Context, bucket string, cfg Configuration) error {
@@ -107,7 +121,7 @@ func (c *Client) GetSecretList(_ SecretListConfig) ([]SecretObject, error) {
 	return objs, nil
 }
 
-func getStore(ctx context.Context, cfg config.Client) (cloudStore, error) {
+func getStore(ctx context.Context, cfg config.Client) (cloudStore, error) { //nolint:ireturn
 	var store cloudStore
 	var err error
 	switch cfg.Provider {
