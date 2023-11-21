@@ -18,10 +18,10 @@ var ErrInvalidPublicKeys = errors.New("invalid public keys")
 const metadataFile = "dolores.md"
 
 type Service struct {
-	store clouldStore
+	store cloudStore
 }
 
-type clouldStore interface {
+type cloudStore interface {
 	WriteToObject(ctx context.Context, bucketName, fileName string, data []byte) error
 	ReadObject(ctx context.Context, bucketName, fileName string) ([]byte, error)
 	ListObject(ctx context.Context, bucketName, path string) ([]cloud.Object, error)
@@ -41,6 +41,7 @@ func (s Service) Init(ctx context.Context, bucket string, cfg Configuration) err
 		if err := s.uploadPubKey(ctx, bucket, pubKey, cfg.PublicKey); err != nil {
 			return fmt.Errorf("error writing public key: %w", err)
 		}
+		log.Info().Msgf("uploaded public key successfully.")
 	}
 	exists, err := s.store.ExistsObject(ctx, bucket, metadataFile)
 	if err != nil {
@@ -146,6 +147,6 @@ func (s Service) ListObject(ctx context.Context, bucket, path string) ([]cloud.O
 	return resp, nil
 }
 
-func NewService(st clouldStore) Service {
+func NewService(st cloudStore) Service {
 	return Service{store: st}
 }

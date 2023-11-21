@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 
 	"filippo.io/age"
 	"filippo.io/age/armor"
@@ -26,17 +25,7 @@ func (c *DecryptConfig) Identities() ([]age.Identity, error) {
 	if c.KeyFile == "" {
 		return nil, ErrInvalidKeyFile
 	}
-	// process identity from keyfile
-	f, err := os.Open(c.KeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("error opening keyfile %s: %w", c.KeyFile, err)
-	}
-	defer f.Close()
-	ids, err := age.ParseIdentities(f)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse identity: %w", err)
-	}
-	return ids, nil
+	return ParseIdentities(c.KeyFile)
 }
 
 func (c *DecryptConfig) Valid() error {

@@ -164,7 +164,7 @@ func (s StorageClient) createNewBucket(ctx context.Context, name string) error {
 func NewStore(ctx context.Context, cfg Config) (StorageClient, error) {
 	data, err := os.ReadFile(cfg.ServiceAccountFile)
 	if err != nil {
-		return StorageClient{}, fmt.Errorf("failed to read service account file with error %v %w", err, ErrInvalidServiceAccount)
+		return StorageClient{}, fmt.Errorf("failed to read service account file with error %w %w", err, ErrInvalidServiceAccount)
 	}
 	sa := new(ServiceAccount)
 	if err := json.Unmarshal(data, sa); err != nil {

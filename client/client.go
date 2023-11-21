@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -31,6 +32,19 @@ type SecretObject struct {
 	Location  string    `json:"location"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (o SecretObject) IsDir() bool {
+	return strings.HasSuffix(o.Name, "/")
+}
+
+func (o SecretObject) BaseName() string {
+	arr := strings.SplitN(o.Name, "/", 2)
+	name := o.Name
+	if len(arr) == 2 {
+		name = arr[1]
+	}
+	return name
 }
 
 func (c *Client) Init(ctx context.Context, bucket string, cfg Configuration) error {
@@ -107,15 +121,15 @@ func (c *Client) GetSecretList(_ SecretListConfig) ([]SecretObject, error) {
 	return objs, nil
 }
 
-func getStore(ctx context.Context, cfg config.Client) (clouldStore, error) {
-	var store clouldStore
+func getStore(ctx context.Context, cfg config.Client) (cloudStore, error) { //nolint:ireturn
+	var store cloudStore
 	var err error
 	switch cfg.Provider {
 	case config.AWS:
 		{
-			store, err = aws.NewStore(ctx)
+			store, err = aws.NewStore(ctx, aws.Config{Credentials: cfg.Cloud.ApplicationCredentials})
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("(aws) %w", err)
 			}
 		}
 	case config.GCS:
@@ -123,11 +137,11 @@ func getStore(ctx context.Context, cfg config.Client) (clouldStore, error) {
 			gcfg := google.Config{ServiceAccountFile: cfg.Cloud.ApplicationCredentials}
 			store, err = google.NewStore(ctx, gcfg)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("(gcp) %w", err)
 			}
 		}
 	default:
-		err = fmt.Errorf("failed to get store: %w", config.ErrCloudProviderNotFound)
+		err = fmt.Errorf("failed to get store for %s: %w", cfg.Provider, config.ErrCloudProviderNotFound)
 	}
 
 	return store, err
@@ -146,7 +160,7 @@ func New(ctx context.Context, cfg config.Client) (*Client, error) {
 		Service: Service{store: st},
 		bucket:  cfg.BucketName(),
 		prefix:  cfg.StoragePrefix,
-		log:     log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Logger(),
+		log:     log.With().Str("bucket", cfg.BucketName()).Str("prefix", cfg.StoragePrefix).Str("provider", cfg.Provider).Logger(),
 	}
 	return cli, nil
 }

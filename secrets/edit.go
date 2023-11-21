@@ -14,6 +14,7 @@ type EditConfig struct {
 	DecryptConfig
 }
 
+// revive:disable function-length
 func (sm SecretManager) Edit(cfg EditConfig) error {
 	req := client.FetchSecretRequest{Name: cfg.Name, Environment: cfg.Environment}
 	data, err := sm.client.FetchSecrets(req)

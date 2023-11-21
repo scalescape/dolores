@@ -17,6 +17,10 @@ import (
 
 var ErrInvalidServiceAccount = errors.New("invalid service account")
 
+type Config struct {
+	Credentials string
+}
+
 type StorageClient struct {
 	client *s3.Client
 	region string
@@ -43,7 +47,7 @@ func (s StorageClient) CreateBucket(ctx context.Context, bucketName string) erro
 		CreateBucketConfiguration: cbCfg,
 	}
 	_, err := s.client.CreateBucket(ctx, bucket)
-	var existsErr *types.BucketAlreadyOwnedByYou = new(types.BucketAlreadyOwnedByYou)
+	existsErr := new(types.BucketAlreadyOwnedByYou)
 	if errors.As(err, &existsErr) {
 		log.Debug().Msgf("bucket %s already exists", bucketName)
 		return nil
@@ -60,7 +64,7 @@ func (s StorageClient) ListObject(ctx context.Context, bucket, path string) ([]c
 		Prefix: aws.String(path),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get object list: %w", err)
+		return nil, fmt.Errorf("failed to get object list for %s: %w", bucket, err)
 	}
 
 	items := resp.Contents
@@ -130,8 +134,9 @@ func (s StorageClient) ExistsObject(ctx context.Context, bucketName, fileName st
 	return true, nil
 }
 
-func NewStore(ctx context.Context) (StorageClient, error) {
-	cfg, err := config.LoadDefaultConfig(ctx)
+func NewStore(ctx context.Context, acfg Config) (StorageClient, error) {
+	cp := config.WithSharedCredentialsFiles([]string{acfg.Credentials})
+	cfg, err := config.LoadDefaultConfig(ctx, cp)
 	if err != nil {
 		return StorageClient{}, err
 	}

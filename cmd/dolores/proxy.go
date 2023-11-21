@@ -16,6 +16,8 @@ type baseCommand struct {
 	log zerolog.Logger
 }
 
+const DefaultPort = 9980
+
 type Monitor struct {
 	baseCommand
 }
@@ -41,10 +43,7 @@ func (m Monitor) Daemon(cctx *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to instantiate proxy: %w", err)
 	}
-	if err := pr.Start(); err != nil {
-		return fmt.Errorf("failed to start proxy server: %w", err)
-	}
-	return nil
+	return pr.Start()
 }
 
 func monitorCommand(action cli.ActionFunc) *cli.Command {
@@ -64,7 +63,7 @@ func monitorCommand(action cli.ActionFunc) *cli.Command {
 			&cli.IntFlag{
 				Name:    "port",
 				Aliases: []string{"p"},
-				Value:   9980,
+				Value:   DefaultPort,
 			},
 			&cli.StringFlag{
 				Name:     "statsd",

@@ -18,7 +18,7 @@ var (
 	ErrCloudProviderNotFound = errors.New("cloud provider not found")
 )
 
-var (
+const (
 	AWS = "AWS"
 	GCS = "GCS"
 )
@@ -70,6 +70,7 @@ func (c Client) Valid() error {
 	return nil
 }
 
+// revive:disable function-length
 func LoadClient(ctx context.Context, env string) (Client, error) {
 	var cfg Client
 	d, err := LoadFromDisk()

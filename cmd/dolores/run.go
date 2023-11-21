@@ -41,7 +41,9 @@ func handleReader(wg *sync.WaitGroup, reader io.Reader, mode OutputType) {
 			break
 		}
 		if mode == Stdout {
-			os.Stdout.Write(buf[:n])
+			if _, err := os.Stdout.Write(buf[:n]); err != nil {
+				log.Error().Msgf("error writing to output: %s", err)
+			}
 		} else if mode == Stderr {
 			log.Error().Msgf("%s", string(buf[:n]))
 		}
@@ -64,6 +66,7 @@ func (c *Runner) environ(ctx context.Context, name string) ([]string, error) {
 	return envs, nil
 }
 
+// revive:disable function-length
 func (c *Runner) runScript(ctx context.Context, cmdName string, args []string) error {
 	log.Trace().Msgf("executing cmd: %s with args: %s", cmdName, args)
 	cmd := exec.CommandContext(ctx, cmdName, args...)
@@ -93,7 +96,7 @@ func (c *Runner) runScript(ctx context.Context, cmdName string, args []string) e
 	c.wg.Wait()
 
 	if err := cmd.Wait(); err != nil {
-		if err, ok := err.(*exec.ExitError); ok { // nolint:errorlint
+		if err, ok := err.(*exec.ExitError); ok { //nolint:errorlint
 			if status, ok := err.Sys().(syscall.WaitStatus); ok {
 				// TODO: Report this error exit status
 				c.exitStatus = status.ExitStatus()

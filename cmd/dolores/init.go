@@ -12,6 +12,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/scalescape/dolores"
 	"github.com/scalescape/dolores/client"
 	"github.com/scalescape/dolores/config"
 	"github.com/urfave/cli/v2"
@@ -59,44 +60,59 @@ func (inp Input) ToMetadata(env string) config.Metadata {
 	}
 }
 
+// revive:disable function-length
 func (c *InitCommand) getCred(res *Input) error {
 	qs := []*survey.Question{}
 
 	switch res.CloudProvider {
 	case config.GCS:
-		{
-			credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-			if credFile != "" {
-				qs = append(qs, &survey.Question{
-					Name:     "creds",
-					Validate: survey.Required,
-					Prompt: &survey.Select{
-						Message: "Use GOOGLE_APPLICATION_CREDENTIALS env as credentials file",
-						Options: []string{credFile},
-					},
-				})
-			} else {
-				qs = append(qs, &survey.Question{
-					Name: "creds",
-					Prompt: &survey.Input{
-						Message: "Enter google service account file path",
-					},
-					Validate: survey.Required,
-				})
-			}
+		credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+		if credFile != "" {
+			qs = append(qs, &survey.Question{
+				Name:     "creds",
+				Validate: survey.Required,
+				Prompt: &survey.Select{
+					Message: "Use GOOGLE_APPLICATION_CREDENTIALS env as credentials file",
+					Options: []string{credFile},
+				},
+			})
+		} else {
+			qs = append(qs, &survey.Question{
+				Name: "creds",
+				Prompt: &survey.Input{
+					Message: "Enter google service account file path",
+				},
+				Validate: survey.Required,
+			})
 		}
 	case config.AWS:
-		{
-			res.ApplicationCredentials = "aws_default"
-			return nil
+		credsInput := &survey.Question{
+			Name: "creds",
+			Prompt: &survey.Input{
+				Message: "Enter aws service account file path",
+			},
+			Validate: survey.Required,
 		}
+		credFile := os.Getenv("AWS_SHARED_CREDENTIALS_FILE")
+		if credFile != "" {
+			credsInput = &survey.Question{
+				Name:     "creds",
+				Validate: survey.Required,
+				Prompt: &survey.Select{
+					Message: "Use AWS_SHARED_CREDENTIALS_FILE env as credentials file",
+					Options: []string{credFile},
+				},
+			}
+		}
+		qs = append(qs, credsInput) //nolint:ineffassign,staticcheck
+		return nil
 	}
 
-	credRes := new(Input)
-	if err := survey.Ask(qs, credRes); err != nil {
+	result := new(Input)
+	if err := survey.Ask(qs, result); err != nil {
 		return fmt.Errorf("failed to get appropriate input: %w", err)
 	}
-	res.ApplicationCredentials = credRes.ApplicationCredentials
+	res.ApplicationCredentials = result.ApplicationCredentials
 	return nil
 }
 
@@ -169,6 +185,7 @@ func (c *InitCommand) generateKey(fname string) (string, error) {
 	return pubKey, nil
 }
 
+// revive:disable:function-length:cyclomatic:cognitive-complexity:cyclomatic
 func (c *InitCommand) initialize(cctx *cli.Context) error {
 	env := cctx.String("environment")
 	if env == "" {
@@ -190,6 +207,10 @@ func (c *InitCommand) initialize(cctx *cli.Context) error {
 			return err
 		}
 	} else {
+		publicKey, err = dolores.ReadPublicKey(keyFilePath)
+		if err != nil {
+			return fmt.Errorf("error reading public key: %s %w", keyFilePath, err)
+		}
 		log.Info().Msgf("asymmetric key already exists at %s", keyFilePath)
 	}
 	d := &config.Dolores{}

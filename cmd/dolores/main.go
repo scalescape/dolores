@@ -92,10 +92,10 @@ func newClient(ctx context.Context) secretsClient {
 		log.Fatal().Msgf("error loading config: %v", err)
 		return nil
 	}
-	client, err := client.New(ctx, cfg)
+	cli, err := client.New(ctx, cfg)
 	if err != nil {
 		log.Fatal().Msgf("error building client: %v", err)
 		return nil
 	}
-	return client
+	return cli
 }
