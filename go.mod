@@ -8,7 +8,11 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/aws/aws-sdk-go-v2/config v1.23.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.42.1
+	github.com/gorilla/handlers v1.5.2
+	github.com/gorilla/mux v1.8.1
+	github.com/jmoiron/sqlx v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.29.1
 	github.com/scalescape/go-metrics v0.0.0-20230825040750-1888415fe69a
 	github.com/stretchr/testify v1.8.4
@@ -16,7 +20,9 @@ require (
 	google.golang.org/api v0.129.0
 )
 
-require github.com/aws/aws-sdk-go-v2/credentials v1.15.2 // indirect
+require github.com/felixge/httpsnoop v1.0.3 // indirect
+
+require github.com/aws/aws-sdk-go-v2/credentials v1.15.2
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
@@ -47,7 +53,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.0
 	github.com/googleapis/enterprise-certificate-proxy v0.2.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
