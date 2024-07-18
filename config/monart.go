@@ -13,24 +13,23 @@ var (
 )
 
 type Monart struct {
-	APIToken string
-	ID       string
+	APIToken  string
+	ID        string
+	ServerURL string
 }
 
 func (m *Monart) Valid() error {
-	if m.APIToken == "" {
-		return ErrInvalidAPIToken
-	}
-	if m.ID == "" {
-		return ErrInvalidUserID
-	}
 	return nil
 }
 
 func LoadMonartClient() (*Monart, error) {
 	mon := &Monart{
-		APIToken: os.Getenv("MONART_API_TOKEN"),
-		ID:       os.Getenv("MONART_ID"),
+		APIToken:  os.Getenv("MONART_API_TOKEN"),
+		ID:        os.Getenv("MONART_ID"),
+		ServerURL: os.Getenv("MONART_SERVER"),
+	}
+	if mon.ServerURL == "" {
+		mon.ServerURL = "http://relyonmetrics.io:8080/"
 	}
 	if err := mon.Valid(); err != nil {
 		return nil, fmt.Errorf("failed to validate config: %w %w", ErrInvalidMonartConfig, err)

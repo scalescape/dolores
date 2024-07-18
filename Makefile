@@ -26,8 +26,11 @@ test: lint
 gomod:
 	go mod tidy
 
-build: gomod
+build: gomod build_server
 	go build --ldflags="${LDFLAGS}" -o ./bin/${CMD} ./cmd/${CMD}/
+
+build_server:
+	go build --ldflags="${LDFLAGS}" -o ./bin/server ./server
 
 gorelease_snapshot: build
 	goreleaser release --snapshot --rm-dist

@@ -16,8 +16,10 @@ const (
 	EnvID         contextKey  = "env"
 )
 
-type Environment string
-type contextKey string
+type (
+	Environment string
+	contextKey  string
+)
 
 func (e Environment) String() string { return string(e) }
 

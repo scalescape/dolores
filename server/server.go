@@ -27,6 +27,7 @@ func server(appCfg config.Application) (*Application, error) {
 	m := mux.NewRouter()
 	m.Use(mux.CORSMethodMiddleware(m))
 
+	m.Use(authHeadersMiddleware)
 	aesKey := appCfg.DB.AesKey
 	db, err := NewDB(appCfg.DB)
 	if err != nil {

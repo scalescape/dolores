@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
@@ -19,6 +20,7 @@ type credentials struct {
 }
 
 type MonartClient struct {
+	cfg  config.Monart
 	ctx  context.Context //nolint:containedctx
 	cred credentials
 	cli  *http.Client
@@ -100,11 +102,11 @@ func (s MonartClient) GetSecretList(cfg SecretListConfig) ([]SecretObject, error
 }
 
 func (s MonartClient) serverURL(path string) string {
-	return "https://relyonmetrics.com/api/" + path
+	return fmt.Sprintf("%s/%s", s.cfg.ServerURL, path)
 }
 
 func (s MonartClient) call(req *http.Request, dest any) (*http.Response, error) {
-	req.Header.Add("User-ID", s.cred.ID)
+	req.Header.Add("Org-ID", s.cred.ID)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", s.cred.APIToken))
 	resp, err := s.cli.Do(req)
 	if err != nil {
@@ -112,7 +114,8 @@ func (s MonartClient) call(req *http.Request, dest any) (*http.Response, error) 
 	}
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		log.Error().Msgf("server failed with status: %d", resp.StatusCode)
-		return nil, fmt.Errorf("server failed with response: %d %w", resp.StatusCode, err)
+		rbody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("server failed with response: %d message: %s err: %w", resp.StatusCode, rbody, err)
 	}
 	if dest != nil {
 		if err := json.NewDecoder(resp.Body).Decode(dest); err != nil {
@@ -124,5 +127,5 @@ func (s MonartClient) call(req *http.Request, dest any) (*http.Response, error) 
 
 func NewMonart(ctx context.Context, cfg *config.Monart) MonartClient {
 	cred := credentials{APIToken: cfg.APIToken, ID: cfg.ID}
-	return MonartClient{cli: http.DefaultClient, cred: cred, ctx: ctx}
+	return MonartClient{cli: http.DefaultClient, cred: cred, ctx: ctx, cfg: *cfg}
 }

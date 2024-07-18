@@ -83,13 +83,20 @@ func newClient(ctx context.Context) secretsClient {
 		log.Fatal().Msgf("environment not passed properly")
 	}
 	var err error
-	if cfg, err := config.LoadMonartClient(); err == nil {
-		log.Trace().Msgf("creating monart client")
+	cfg, err := config.LoadMonartClient()
+	if err != nil {
+		log.Info().Msgf("erorr creating monart client: %v", err)
+		return newStorageClient(ctx, env)
+	} else {
 		return client.NewMonart(ctx, cfg)
 	}
+}
+
+// directly connecting with cloud using default credentials and operating with objects.
+func newStorageClient(ctx context.Context, env string) *client.Client {
 	cfg, err := config.LoadClient(ctx, env)
 	if err != nil {
-		log.Fatal().Msgf("error loading config: %v", err)
+		log.Fatal().Msgf("main: error loading config: %v", err)
 		return nil
 	}
 	cli, err := client.New(ctx, cfg)

@@ -17,10 +17,10 @@ type Store struct {
 }
 
 type Secret struct {
-	ID        string    `db:"id" json:"id,omitempty"`
+	ID        string    `db:"id"         json:"id,omitempty"`
 	ProjectID string    `db:"project_id" json:"project_id,omitempty"`
-	Name      string    `db:"name" json:"name"`
-	Location  string    `db:"location" json:"location"`
+	Name      string    `db:"name"       json:"name"`
+	Location  string    `db:"location"   json:"location"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
 }

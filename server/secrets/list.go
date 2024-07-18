@@ -45,7 +45,7 @@ func List(svc Service) http.HandlerFunc {
 		}
 		data, err := svc.ListSecret(ctx, req)
 		if err != nil {
-			lib.WriteError(w, http.StatusInternalServerError, err, "failed to list secrets")
+			lib.WriteError(w, http.StatusInternalServerError, err, "failed to list secrets: %s", req.environment)
 			return
 		}
 		if len(data) == 0 {

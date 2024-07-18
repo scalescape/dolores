@@ -37,8 +37,10 @@ func (s StorageClient) bucketExists(ctx context.Context, bucketName string) (boo
 func (s StorageClient) CreateBucket(ctx context.Context, bucketName string) error {
 	lconst := types.BucketLocationConstraint(s.region)
 	cbCfg := &types.CreateBucketConfiguration{LocationConstraint: lconst}
-	bucket := &s3.CreateBucketInput{Bucket: aws.String(bucketName),
-		CreateBucketConfiguration: cbCfg}
+	bucket := &s3.CreateBucketInput{
+		Bucket:                    aws.String(bucketName),
+		CreateBucketConfiguration: cbCfg,
+	}
 	_, err := s.client.CreateBucket(ctx, bucket)
 	existsErr := new(types.BucketAlreadyOwnedByYou)
 	if errors.As(err, &existsErr) {
@@ -100,7 +102,6 @@ func (s StorageClient) ReadObject(ctx context.Context, bucketName, fileName stri
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(fileName),
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to read object : %w", err)
 	}

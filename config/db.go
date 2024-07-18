@@ -4,23 +4,23 @@ import (
 	"fmt"
 	"time"
 
-	// postgres driver library
+	// postgres driver library.
 	_ "github.com/lib/pq"
 )
 
-// database configuration for server
+// database configuration for server.
 type Database struct {
 	Driver            string `default:"postgres"`
 	Host              string `required:"true"`
 	User              string `required:"true"`
 	Password          string `required:"true"`
 	Port              int    `default:"5432"`
-	MaxIdleConns      int    `split_words:"true" default:"20"`
-	MaxOpenConns      int    `split_words:"true" default:"30"`
-	MaxConnLifetimeMs int    `split_words:"true" default:"1000"`
-	Name              string `split_words:"true" required:"true"`
-	SslMode           string `split_words:"true" default:"disable"`
-	AesKey            string `split_words:"true" required:"true"`
+	MaxIdleConns      int    `default:"20"       split_words:"true"`
+	MaxOpenConns      int    `default:"30"       split_words:"true"`
+	MaxConnLifetimeMs int    `default:"1000"     split_words:"true"`
+	Name              string `required:"true"    split_words:"true"`
+	SslMode           string `default:"disable"  split_words:"true"`
+	AesKey            string `required:"true"    split_words:"true"`
 }
 
 func (db Database) MaxConnLifetime() time.Duration {

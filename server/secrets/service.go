@@ -112,7 +112,7 @@ func (s Service) FetchSecret(ctx context.Context, req fetchRequest) (string, err
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch project: %w", err)
 	}
-	//sec, err := s.Store.fetchSecret(ctx, req.Name, proj.ID)
+	// sec, err := s.Store.fetchSecret(ctx, req.Name, proj.ID)
 	//if err != nil {
 	//	return "", err
 	//}
